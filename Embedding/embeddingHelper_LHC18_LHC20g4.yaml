@@ -1,0 +1,6 @@
+name: "Embedding configuration min bias, LHC20g4 embedded in PbPb, LHC18 - 5.02 TeV PYTHIA"
+internalEventSelection:
+    enabled: true
+    centralityRange: [0, 90]
+    physicsSelection:
+        - "kINT7"
