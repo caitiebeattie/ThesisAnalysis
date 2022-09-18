@@ -12,7 +12,7 @@ using namespace std;
 
 
 void getq2(const char *anfile, double cel, double cer);
-void getbin(const char *analysisfile, double centl, double centr, vector<vector<long double>> q2vec);
+void getbin(const char *analysisfile, double centl, double centr, vector<vector<long double>> q2vec, int ese);
 void setstyle(vector<TH1D*> vec1, vector<TH1D*> vec2, vector<TH1D*> vec3);
 
 int lbin = 10;
@@ -34,36 +34,37 @@ TH1D *detsum2= new TH1D("det2sum", "", binres, lbin, rbin);
 
 long int totevents = 0;
 
-//vector<const char*> filenames3 = {"TrainOutputs/AnalysisResults7440.root", "TrainOutputs/AnalysisResults7441.root", "TrainOutputs/AnalysisResults7442.root", "TrainOutputs/AnalysisResults7443.root", "TrainOutputs/AnalysisResults7444.root", "TrainOutputs/AnalysisResults7445.root", "TrainOutputs/AnalysisResults7446.root", "TrainOutputs/AnalysisResults7447.root", "TrainOutputs/AnalysisResults7448.root", "TrainOutputs/AnalysisResults7449.root", "TrainOutputs/AnalysisResults7450.root", "TrainOutputs/AnalysisResults7451.root", "TrainOutputs/AnalysisResults7452.root", "TrainOutputs/AnalysisResults7453.root", "TrainOutputs/AnalysisResults7454.root", "TrainOutputs/AnalysisResults7455.root", "TrainOutputs/AnalysisResults7456.root", "TrainOutputs/AnalysisResults7457.root", "TrainOutputs/AnalysisResults7458.root", "TrainOutputs/AnalysisResults7459.root"};
-//vector<const char*> filenames3 = {"../ESE/Trains/AnalysisResults7637_2.root", "../ESE/Trains/AnalysisResults7638_2.root", "../ESE/Trains/AnalysisResults7639_2.root", "../ESE/Trains/AnalysisResults7640_2.root", "../ESE/Trains/AnalysisResults7641_2.root", "../ESE/Trains/AnalysisResults7642_2.root", "../ESE/Trains/AnalysisResults7643_2.root", "../ESE/Trains/AnalysisResults7644_2.root", "../ESE/Trains/AnalysisResults7645_2.root", "../ESE/Trains/AnalysisResults7646_2.root", "../ESE/Trains/AnalysisResults7647_2.root", "../ESE/Trains/AnalysisResults7648_2.root", "../ESE/Trains/AnalysisResults7650_2.root", "../ESE/Trains/AnalysisResults7651_2.root", "../ESE/Trains/AnalysisResults7652_2.root", "../ESE/Trains/AnalysisResults7653_2.root", "../ESE/Trains/AnalysisResults7654_2.root", "../ESE/Trains/AnalysisResults7655_2.root", "../ESE/Trains/AnalysisResults7656_2.root"};
+//R = 0.2
+/*vector<const char*> filenames3 = {"../ESE/LHC18/R02/AnalysisResults8145.root", "../ESE/LHC18/R02/AnalysisResults8146.root",
+  "../ESE/LHC18/R02/AnalysisResults8147.root", "../ESE/LHC18/R02/AnalysisResults8148.root", "../ESE/LHC18/R02/AnalysisResults8149.root", 
+  "../ESE/LHC18/R02/AnalysisResults8150.root", "../ESE/LHC18/R02/AnalysisResults8151.root", "../ESE/LHC18/R02/AnalysisResults8152.root", 
+  "../ESE/LHC18/R02/AnalysisResults8153.root", "../ESE/LHC18/R02/AnalysisResults8154.root", "../ESE/LHC18/R02/AnalysisResults8155.root",
+  "../ESE/LHC18/R02/AnalysisResults8156.root", "../ESE/LHC18/R02/AnalysisResults8157.root", "../ESE/LHC18/R02/AnalysisResults8158.root",
+  "../ESE/LHC18/R02/AnalysisResults8159.root", "../ESE/LHC18/R02/AnalysisResults8160.root", "../ESE/LHC18/R02/AnalysisResults8161.root",
+  "../ESE/LHC18/R02/AnalysisResults8162.root", "../ESE/LHC18/R02/AnalysisResults8163.root", "../ESE/LHC18/R02/AnalysisResults8164.root"};
+*/
+//R = 0.4
+    vector<const char*> filenames3 = {"../ESE/LHC18/R04/AnalysisResults8124.root",
+       "../ESE/LHC18/R04/AnalysisResults8299.root", "../ESE/LHC18/R04/AnalysisResults8126.root", "../ESE/LHC18/R04/AnalysisResults8298.root", 
+       "../ESE/LHC18/R04/AnalysisResults8301.root", "../ESE/LHC18/R04/AnalysisResults8129.root", "../ESE/LHC18/R04/AnalysisResults8130.root", 
+       "../ESE/LHC18/R04/AnalysisResults8131.root", "../ESE/LHC18/R04/AnalysisResults8132.root", "../ESE/LHC18/R04/AnalysisResults8133.root",
+       "../ESE/LHC18/R04/AnalysisResults8134.root", "../ESE/LHC18/R04/AnalysisResults8135.root", "../ESE/LHC18/R04/AnalysisResults8136.root",
+       "../ESE/LHC18/R04/AnalysisResults8137.root", "../ESE/LHC18/R04/AnalysisResults8138.root", "../ESE/LHC18/R04/AnalysisResults8140.root",
+       "../ESE/LHC18/R04/AnalysisResults8141.root", "../ESE/LHC18/R04/AnalysisResults8142.root", "../ESE/LHC18/R04/AnalysisResults8143.root"};
+//R = 0.4
+//vector<const char*> filenames3 = {"../ESE/LHC18/R04/AnalysisResults8001.root", "../ESE/LHC18/R04/AnalysisResults8002.root", 
+//    "../ESE/LHC18/R04/AnalysisResults8003.root", "../ESE/LHC18/R04/AnalysisResults8004.root", "../ESE/LHC18/R04/AnalysisResults8005.root",
+//    "../ESE/LHC18/R04/AnalysisResults8006.root", "../ESE/LHC18/R04/AnalysisResults8007.root", "../ESE/LHC18/R04/AnalysisResults8008.root"};
 
 
-//R = 0.2 ESE, 0-10%, pass1q
-/*vector<const char*> filenames3 = {"../ESE/Trains/AnalysisResults7697_2.root", "../ESE/Trains/AnalysisResults7698_2.root", 
-       "../ESE/Trains/AnalysisResults7699_2.root", "../ESE/Trains/AnalysisResults7700_2.root", "../ESE/Trains/AnalysisResults7701_2.root", 
-       "../ESE/Trains/AnalysisResults7702_2.root", "../ESE/Trains/AnalysisResults7703_2.root", "../ESE/Trains/AnalysisResults7704_2.root",
-       "../ESE/Trains/AnalysisResults7705_2.root", "../ESE/Trains/AnalysisResults7706_2.root", "../ESE/Trains/AnalysisResults7707_2.root",
-       "../ESE/Trains/AnalysisResults7708_2.root", "../ESE/Trains/AnalysisResults7709_2.root", "../ESE/Trains/AnalysisResults7710_2.root",
-       "../ESE/Trains/AnalysisResults7711_2.root", "../ESE/Trains/AnalysisResults7712_2.root", "../ESE/Trains/AnalysisResults7713_2.root",
-       "../ESE/Trains/AnalysisResults7714_2.root", "../ESE/Trains/AnalysisResults7715_2.root", "../ESE/Trains/AnalysisResults7716_2.root"};*/
-
-//R = 0.2 ESE, 30-50%, pass1q
-//vector<const char*> filenames3 = {"../ESE/Trains/AnalysisResults7671_2.root", "../ESE/Trains/AnalysisResults7694_2.root", 
-//       "../ESE/Trains/AnalysisResults7673_2.root", "../ESE/Trains/AnalysisResults7674_2.root", "../ESE/Trains/AnalysisResults7675_2.root",
-//       "../ESE/Trains/AnalysisResults7676_2.root", "../ESE/Trains/AnalysisResults7677_2.root", "../ESE/Trains/AnalysisResults7678_2.root",
-//       "../ESE/Trains/AnalysisResults7695_2.root", "../ESE/Trains/AnalysisResults7680_2.root", "../ESE/Trains/AnalysisResults7681_2.root",
-//       "../ESE/Trains/AnalysisResults7682_2.root", "../ESE/Trains/AnalysisResults7683_2.root", "../ESE/Trains/AnalysisResults7685_2.root", 
-//       "../ESE/Trains/AnalysisResults7686_2.root", "../ESE/Trains/AnalysisResults7687_2.root", "../ESE/Trains/AnalysisResults7690_2.root",
-//       "../ESE/Trains/AnalysisResults7691_2.root", "../ESE/Trains/AnalysisResults7692_2.root", "../ESE/Trains/AnalysisResults7693_2.root"};
-
-//R = 0.2 ESE, 30-50%, pass3q
-vector<const char*> filenames3 = {"../ESE/LHC18q/AnalysisResults7786.root", "../ESE/LHC18q/AnalysisResults7787.root", 
-       "../ESE/LHC18q/AnalysisResults7788.root", "../ESE/LHC18q/AnalysisResults7789.root", "../ESE/LHC18q/AnalysisResults7790.root",
-       "../ESE/LHC18q/AnalysisResults7791.root", "../ESE/LHC18q/AnalysisResults7792.root", "../ESE/LHC18q/AnalysisResults7808.root",
-       "../ESE/LHC18q/AnalysisResults7809.root", "../ESE/LHC18q/AnalysisResults7810.root", "../ESE/LHC18q/AnalysisResults7811.root",
-       "../ESE/LHC18q/AnalysisResults7797.root", "../ESE/LHC18q/AnalysisResults7798.root", "../ESE/LHC18q/AnalysisResults7799.root", 
-       "../ESE/LHC18q/AnalysisResults7800.root", "../ESE/LHC18q/AnalysisResults7801.root", "../ESE/LHC18q/AnalysisResults7802.root", 
-       "../ESE/LHC18q/AnalysisResults7803.root", "../ESE/LHC18q/AnalysisResults7804.root", "../ESE/LHC18q/AnalysisResults7805.root"};
+//R = 0.2, 30-50% with pileup cuts
+//vector<const char*> filenames3 = {"../ESE/LHC18/AnalysisResults7909.root", "../ESE/LHC18/AnalysisResults7930.root", 
+//       "../ESE/LHC18/AnalysisResults7911.root", "../ESE/LHC18/AnalysisResults7912.root", "../ESE/LHC18/AnalysisResults7913.root",
+//       "../ESE/LHC18/AnalysisResults7914.root", "../ESE/LHC18/AnalysisResults7915.root", "../ESE/LHC18/AnalysisResults7916.root",
+//       "../ESE/LHC18/AnalysisResults7917.root", "../ESE/LHC18/AnalysisResults7918.root", "../ESE/LHC18/AnalysisResults7919.root", 
+//       "../ESE/LHC18/AnalysisResults7920.root", "../ESE/LHC18/AnalysisResults7921.root", "../ESE/LHC18/AnalysisResults7922.root",
+//       "../ESE/LHC18/AnalysisResults7923.root", "../ESE/LHC18/AnalysisResults7924.root", "../ESE/LHC18/AnalysisResults7925.root",
+//       "../ESE/LHC18/AnalysisResults7926.root", "../ESE/LHC18/AnalysisResults7927.root", "../ESE/LHC18/AnalysisResults7928.root"};
 
 int j = 0;
 int start = 0;
@@ -86,16 +87,16 @@ int start = 0;
 //========================================
 //========================================
 
-void unscaledspec (double cl, double cr) {
+void unscaledspec (double cl, double cr, int ese = 2) {
 
   gStyle->SetTitleFontSize(0.1);
   //gStyle->SetOptStat(0);
 
-  getq2("../ESE/AnalysisResults7812.root", cl, cr);
+  getq2("../ESE/AnalysisResults8119.root", cl, cr);
 
   cout << "line 50\n";
   for (int i = 0; i < filenames3.size(); i++)    { 
-      getbin(filenames3[i], cl, cr, q2percentiles);
+      getbin(filenames3[i], cl, cr, q2percentiles, ese);
         bin.push_back((TH1D*)binspec->Clone(bins[i]));
         gen.push_back((TH1D*)genspec->Clone(gens[i]));
         det.push_back((TH1D*)detspec->Clone(dets[i]));
@@ -124,13 +125,14 @@ void unscaledspec (double cl, double cr) {
     info->SetTextSize(0.035);
     info->SetBorderSize(0);
     info->AddEntry((TObject*)0, "ALICE, Pb#font[122]{-}Pb #sqrt{#it{s}_{NN}} = 5.02 TeV, 30#font[122]{-}50%", "");
-    info->AddEntry((TObject*)0, "Unscaled Empedding Sprectra, LHC18q_pass3", "");
+    info->AddEntry((TObject*)0, "Unscaled Embedding Spectra, LHC18 pass3", "");
 
   auto datarun = new TLegend(0.15, 0.75, 0.35, 0.85);
   datarun->SetTextSize(0.035);
   datarun->SetBorderSize(0);
-  datarun->AddEntry((TObject*)0, "Charged Jets, R = 0.2, anti-#it{k}_{T}, |#it{#eta}_{jet}| < 0.7", "");
-  datarun->AddEntry((TObject*)0, "30\% largest #it{q}_{2}, #it{p}_{T, true} > 10 GeV/#it{c}", ""); 
+  datarun->AddEntry((TObject*)0, "Charged Jets, R = 0.4, anti-#it{k}_{T}, |#it{#eta}_{jet}| < 0.5", "");
+  if (ese == 0)  datarun->AddEntry((TObject*)0, "10-40\% smallest #it{q}_{2}, #it{p}_{T, true} > 10 GeV/#it{c}", ""); 
+  if (ese == 1)  datarun->AddEntry((TObject*)0, "30\% largest #it{q}_{2}, #it{p}_{T, true} > 10 GeV/#it{c}", ""); 
 
 vector<string> newleg(0);
 for (int i = 0; i < filenames3.size(); i++) {
@@ -220,30 +222,30 @@ void getq2(const char *anfile, double cel, double cer)  {
       TFile *fin = new TFile(anfile);
       //Calculate q2 percentiles
       TDirectoryFile *qnfile = (TDirectoryFile*)fin->Get("PWGJE_QnVectorTender");
-      TList *qnlist = (TList*)qnfile->Get("coutputQnVectorTender_Q2V0C_EPV0C");
-      TH2F *q2hist2D = (TH2F*)qnlist->FindObject("fHistqnVsCentrV0C");
+      TList *qnlist = (TList*)qnfile->Get("coutputQnVectorTender_Q2_EP");
+      TH2F *q2hist2D = (TH2F*)qnlist->FindObject("fHistqnVsCentrFullV0");
       //initialize variables used to calculate percentiles
-      long int percentileticker = 0;                                   //number of entries, starting from lowest q2 and counting upward
-      int percentilen = 1;                                             //number percentile we're on
       vector<long double> percentiles(0);                              //vector that stores 10th, 20th etc percentile per cent bin
       vector<vector<long double>>  allPercent(0);                      //vector that stores percentiles vectors for all centralities
       int centdiff = (int)cer-(int)cel;
       int leftc, rightc;
       //get percentiles in bins of 1% centrality
       for (int j = 0; j < centdiff; j++) {
+        long int percentileticker = 0;                                   //number of entries, starting from lowest q2 and counting upward
+        int percentilen = 1;                                             //number percentile we're on
         leftc = (int)cel + j; 
         rightc = (int)cel + j + 1;    
         q2hist2D->GetXaxis()->SetRangeUser(leftc, rightc);
         TH1F *q2hist = (TH1F*)q2hist2D->ProjectionY();
-        q2hist->Rebin(100);
+        //q2hist->Rebin(100);
         long double percentilemarker = (long double)q2hist->GetEntries()/10.0;      //number of entries that compose 10% of sample
-        for (int i = 0; i <= 100; i++)   {
+        for (int i = 0; i <= q2hist->GetNbinsX(); i++)   {
           percentileticker += q2hist->GetBinContent(i);         //increment the percentileticker
           if (percentileticker >= percentilen*percentilemarker)  {
               percentiles.push_back(q2hist->GetBinCenter(i));
               percentilen++;
           }
-        if (i == 100)  {
+        if (i == q2hist->GetNbinsX())  {
             allPercent.push_back(percentiles);
             percentiles.resize(0);
             break;}             
@@ -257,7 +259,7 @@ void getq2(const char *anfile, double cel, double cer)  {
 
 
 
-void getbin(const char *analysisfile, double centl, double centr, vector<vector<long double>> q2vec) {
+void getbin(const char *analysisfile, double centl, double centr, vector<vector<long double>> q2vec, int ese) {
 
     j++;    
 
@@ -277,7 +279,7 @@ void getbin(const char *analysisfile, double centl, double centr, vector<vector<
     TH1D *eventcount = (TH1D*)EmbeddingHelper->FindObject("fHistEventCount");
 
     TTree *T = nullptr;
-    lefile->GetObject("JetTree_AliAnalysisTaskJetExtractor_hybJet_AKTChargedR020_tracks_pT0150_pt_scheme_Rho_hybJet", T);
+    lefile->GetObject("JetTree_AliAnalysisTaskJetExtractor_hybJet_AKTChargedR040_tracks_pT0150_pt_scheme_Rho_hybJet", T);
     float hybridpT, detpT, partpT, centrality, area, matchradius, q2;
     T->SetBranchAddress("Jet_Pt", &hybridpT);
     T->SetBranchAddress("Jet_MC_MatchedDetLevelJet_Pt", &detpT);
@@ -285,7 +287,7 @@ void getbin(const char *analysisfile, double centl, double centr, vector<vector<
     T->SetBranchAddress("Event_Centrality", &centrality);
     T->SetBranchAddress("Jet_Area", &area);
     T->SetBranchAddress("Jet_MC_MatchedDetLevelJet_Distance", &matchradius); 
-    T->SetBranchAddress("Event_Q2Vector", &q2); 
+    T->SetBranchAddress("Event_Q2VectorV0M", &q2); 
 
     int entries = T->GetEntries();
 
@@ -306,7 +308,10 @@ void getbin(const char *analysisfile, double centl, double centr, vector<vector<
        T->GetEntry(i);
        if (centrality < centl || centrality > centr)  continue;
        if (partpT < 10.0 )  continue;
-       if (q2 < q2vec[(int)centrality-30][6])   continue;
+       if (ese == 0)  {
+          if (q2 < q2vec[(int)centrality-30][0])   continue;
+          if (q2 > q2vec[(int)centrality-30][3])   continue;}
+       if (ese == 1)  {if (q2 < q2vec[(int)centrality-30][6])   continue;}
        binspec->Fill(hybridpT);
        genspec->Fill(partpT);
        detspec->Fill(detpT);
