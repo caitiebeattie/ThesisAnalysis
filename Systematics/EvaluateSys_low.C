@@ -7,41 +7,60 @@ TGraphAsymmErrors* MakeError(TGraphAsymmErrors* f_data, TGraphAsymmErrors* f_mc,
 std::pair<TH1D*, TH1D*> CalculateDeltaCut(TH1D* h, TH1D* h_up, TH1D* h_down, bool sym);
 TGraphAsymmErrors* MakeAsymmError(std::vector<TH1D*> histvec_up, std::vector<TH1D*> histvec_down, TH1D* h);
 TH1D* ScaleSpec(TH1D* h1,  TH1D* heffnum, TH1D* hrecEff);
+void applyR2(TH1D* NinPre, TH1D* NoutPre, double EPR);
+void GetKinematicEfficiency(string fname, TH1D *KEout, TH1D *KEin, string fTag);
 //void EvaluateSys_RaaCaitie();
 //TH1D* getRuedigerRecEffML(Double_t radius);
 
 double centl, centr;
+double pi = 3.14159265359;
 bool cent = false;
 bool semi = false;
+bool epup = false;
+double R2 = 0.55;
+vector<double> nomerge = {35, 40, 50, 65, 80, 100, 120}; 
+std::vector<double> kBinsUnfolded = {10.0, 20.0, 25.0, 30.0, 35.0, 40.0, 50.0, 60.0, 80.0, 100.0, 120.0, 140.0, 190.0, 250.0};
+
+
 //========================================
 //========================================
 //=========== main function ==============
 //========================================
 //========================================
-void EvaluateSys_low(int lowbin = 0, int highbin = -1, const char* tag = "lo", int debug = 0)
+void EvaluateSys_low(int lowbin = 0, int highbin = -1, const char* tag = "lo", int debug = 0, int R = 2)
 {
+   bool out = false;
+   bool in = false;
+   if (lowbin == 0) out = true;
+   if (lowbin == 4) in = true;
+   
+
   //=================================================================
   //============= List Files for Different Systematics ==============
   //=================================================================
       // nominal file
-      std::string file_nom       = "UnfoldingData_2D_non_R02_3050_lo30_Feb4.root";
-      std::string file_plus5     = "UnfoldingData_2D_non_R02_3050_lo30_hipT_Feb4.root";
-      std::string file_min5      = "UnfoldingData_2D_non_R02_3050_lo30_lopT_Feb4.root";
-      std::string file_eff       = "UnfoldingData_2D_non_R02_3050_lo30_trak_Feb4.root";
-      std::string file_reweight  = "UnfoldingData_2D_non_R02_3050_lo30_rewe_Feb1.root";
+      std::string file_nom       = "UnfoldingData_2D_non_R02_qV0C_epV0A_3050_lo30_20_Nov14.root";
+      std::string file_plus5     = "UnfoldingData_2D_non_R02_qV0C_epV0A_3050_lo30_hipT_20_Nov14.root";
+      std::string file_min5      = "UnfoldingData_2D_non_R02_qV0C_epV0A_3050_lo30_lopT_20_Nov14.root";
+      std::string file_eff       = "UnfoldingData_2D_non_R02_qV0C_epV0A_3050_lo30_trak_20_Nov14.root";
+      std::string file_reweight  = "UnfoldingData_2D_non_R02_qV0C_epV0A_3050_lo30_rewe_20_Nov14.root";
    
       // file for the reconstruction efficiency
       //TH1D* hreceff = (TH1D*)getRuedigerRecEffML(0.4);
       TFile *receffile  = new TFile("ChargedJetRecEfficiencies.root");
-      TH1D* hreceff                 = (TH1D*)receffile->Get("RecEff_R020_5GeV");
-      std::string file_rec          = "pubDataCharged_ppR020.root";
+      stringstream recname;
+      recname << "RecEff_R0" << R << "0_5GeV";
+      TH1D* hreceff0                = (TH1D*)receffile->Get(recname.str().c_str());
+      hreceff0->SetName("rectemp");
+      TH1D* hreceff = (TH1D*)hreceff0->Rebin(nomerge.size()-1, recname.str().c_str(), nomerge.data());
+      std::string file_rec          = "pubDataCharged_ppR040.root";
       //std::string file_ruediger     = "../ResultsRuediger.root";
       // vary the number of iterations by +/-1
       std::string histname          = "Bayesian_Unfolded_6";
       std::string histnameplus1     = "Bayesian_Unfolded_7";
       std::string histnamemin1      = "Bayesian_Unfolded_5";
-      std::string histnameKinNum    = "KinPos";
-      std::string histnameKinDenom  = "KinPre";
+      std::string histnameKinNum    = "KinPos2";
+      std::string histnameKinDenom  = "KinPre2";
       std::vector<TH1D*> histvec;
       std::vector<TH1D*> histvec_up;
       std::vector<TH1D*> histvec_down;
@@ -87,35 +106,55 @@ void EvaluateSys_low(int lowbin = 0, int highbin = -1, const char* tag = "lo", i
   //===============================================================
       // ============ handle the nominal case =========================================
       TFile* fnom = new TFile(file_nom.c_str());
-      //fnom->ls();
+      //Get Kinematic efficiencies
+      TH1D *hKinO_nom = new TH1D("hKinO_nom", "hKinO_nom", kBinsUnfolded.size()-1, kBinsUnfolded.data());
+      TH1D *hKinI_nom = new TH1D("hKinI_nom", "hKinI_nom", kBinsUnfolded.size()-1, kBinsUnfolded.data());
+      GetKinematicEfficiency(file_nom, hKinO_nom, hKinI_nom, "Nom");
       //retrieve 2D hist
       TH2D* h2_nom = (TH2D*)fnom->Get(histname.c_str()); 
-      //project
-      TH1D* h1_nom = (TH1D*)h2_nom->ProjectionX("h1_nom", lowbin, highbin); 
-      h1_nom->SetName("h1_nom");
-      //Get Kinematic efficiencies
-      TH1D* hKinNum_nom = (TH1D*)fnom->Get(histnameKinNum.c_str());
-      hKinNum_nom->SetName("hKinNum_nom");
-      TH1D* hKinDenom_nom = (TH1D*)fnom->Get(histnameKinDenom.c_str());
-      hKinDenom_nom->SetName("hKinDenom_nom");
-      hKinNum_nom->Divide(hKinDenom_nom);
-      TH1D* nom = (TH1D*)ScaleSpec(h1_nom, hKinNum_nom, hreceff);
+      //project nominal in and out of plane
+      TH1D* h1_in = (TH1D*)h2_nom->ProjectionX("h1_in", 4, -1); 
+      TH1D* h1_out = (TH1D*)h2_nom->ProjectionX("h1_out", 0, 1); 
+      TH1D* h1_icorr = (TH1D*)ScaleSpec(h1_in, hKinI_nom, hreceff);
+      TH1D* h1_ocorr = (TH1D*)ScaleSpec(h1_out, hKinO_nom, hreceff);
+      applyR2(h1_icorr, h1_ocorr, R2);
+      //asign nominal and KE hists to in or out
+      TH1D *h1_nom;
+      if (lowbin == 0)    h1_nom = (TH1D*)h1_ocorr->Clone("h1_nom"); 
+      if (lowbin == 4)    h1_nom = (TH1D*)h1_icorr->Clone("h1_nom"); 
+      TH1D* nom = (TH1D*)h1_nom->Clone("h1_nom_copy");
       histvec.push_back(nom);
  
       // ============= handle the systematic for number of iterations +/- 1 ===========
       // +1 Iterations
       TH2D* h2_iterhigh = (TH2D*)fnom->Get(histnameplus1.c_str());
-      //projec
-      TH1D* h1_iterhigh = (TH1D*)h2_iterhigh->ProjectionX("h1_iterhigh", lowbin, highbin);
-      h1_iterhigh->SetName("h1_iterhigh");
-      TH1D* iterhigh = (TH1D*)ScaleSpec(h1_iterhigh, hKinNum_nom, hreceff);
+      //project nominal in and out of plane
+      TH1D* h1_iterhigh_in = (TH1D*)h2_iterhigh->ProjectionX("h1_iterhigh_in", 4, -1); 
+      TH1D* h1_iterhigh_out = (TH1D*)h2_iterhigh->ProjectionX("h1_iterhigh_out", 0, 1); 
+      TH1D* h1_iterhigh_icorr = (TH1D*)ScaleSpec(h1_iterhigh_in, hKinI_nom, hreceff);
+      TH1D* h1_iterhigh_ocorr = (TH1D*)ScaleSpec(h1_iterhigh_out, hKinO_nom, hreceff);
+      applyR2(h1_iterhigh_icorr, h1_iterhigh_ocorr, R2);
+      //asign nominal and KE hists to in or out
+      TH1D *h1_iterhigh;
+      if (lowbin == 0)    h1_iterhigh = (TH1D*)h1_iterhigh_ocorr->Clone("h1_iterhigh"); 
+      if (lowbin == 4)    h1_iterhigh = (TH1D*)h1_iterhigh_icorr->Clone("h1_iterhigh"); 
+      TH1D* iterhigh = (TH1D*)h1_iterhigh->Clone("h1_iterhigh_copy");
       histvec.push_back(iterhigh);
       // -1 Iterations
       TH2D* h2_iterlow = (TH2D*)fnom->Get(histnamemin1.c_str());
-      TH1D* h1_iterlow = (TH1D*)h2_iterlow->ProjectionX("h1_iterlow", lowbin, highbin);
-      h1_iterlow->SetName("h1_iterlow");
-      TH1D* iterlow = (TH1D*)ScaleSpec(h1_iterlow, hKinNum_nom, hreceff);
+      //project nominal in and out of plane
+      TH1D* h1_iterlow_in = (TH1D*)h2_iterlow->ProjectionX("h1_iterlow_in", 4, -1); 
+      TH1D* h1_iterlow_out = (TH1D*)h2_iterlow->ProjectionX("h1_iterlow_out", 0, 1); 
+      TH1D* h1_iterlow_icorr = (TH1D*)ScaleSpec(h1_iterlow_in, hKinI_nom, hreceff);
+      TH1D* h1_iterlow_ocorr = (TH1D*)ScaleSpec(h1_iterlow_out, hKinO_nom, hreceff);
+      applyR2(h1_iterlow_icorr, h1_iterlow_ocorr, R2);
+      //asign nominal and KE hists to in or out
+      TH1D *h1_iterlow;
+      if (lowbin == 0)    h1_iterlow = (TH1D*)h1_iterlow_ocorr->Clone("h1_iterlow"); 
+      if (lowbin == 4)    h1_iterlow = (TH1D*)h1_iterlow_icorr->Clone("h1_iterlow"); 
+      TH1D* iterlow = (TH1D*)h1_iterlow->Clone("h1_iterlow_copy");
       histvec.push_back(iterlow);
+
       std::pair<TH1D*, TH1D*> iterUp = CalculateDeltaCut(nom, iterhigh, iterhigh, true);
       std::pair<TH1D*, TH1D*> iterDown = CalculateDeltaCut(nom, iterlow, iterlow, true);
       histvec_up.push_back(iterUp.first);
@@ -126,19 +165,23 @@ void EvaluateSys_low(int lowbin = 0, int highbin = -1, const char* tag = "lo", i
   
       // ============ handle the systematic for the tracking efficiency ================
       TFile* feff = new TFile(file_eff.c_str());
+      //Get Kinematic efficiencies
+      TH1D *hKinO_eff = new TH1D("hKinO_eff", "hKinO_eff", kBinsUnfolded.size()-1, kBinsUnfolded.data());
+      TH1D *hKinI_eff = new TH1D("hKinI_eff", "hKinI_eff", kBinsUnfolded.size()-1, kBinsUnfolded.data());
+      GetKinematicEfficiency(file_eff, hKinO_eff, hKinI_eff, "Eff");
+      //retrieve 2D hist
       TH2D* h2_eff = (TH2D*)feff->Get(histname.c_str());
-      //project
-      TH1D* h1_eff = (TH1D*)h2_eff->ProjectionX("h1_eff", lowbin, highbin);
-      h1_eff->SetName("h1_eff");
-      TH1D* hKinNum_eff = (TH1D*)feff->Get(histnameKinNum.c_str());
-      hKinNum_eff->SetName("hKinNum_eff");
-      TH1D* hKinDenom_eff = (TH1D*)feff->Get(histnameKinDenom.c_str());
-      hKinDenom_eff->SetName("hKinDenom_eff");
-      hKinNum_eff->Divide(hKinDenom_eff);
-      //TFile* fr = new TFile(file_ruediger.c_str());
-      //TDirectoryFile* refFiles = (TDirectoryFile*)fr->Get("JetRecEfficiencies");
-      //TH1D* hreceffRed = (TH1D*)refFiles->Get("hResponse_DET_LHC15o_R040_LeadingTrackBias0GeV_TrackEff096");
-      TH1D* eff = (TH1D*)ScaleSpec(h1_eff, hKinNum_eff, hreceff);
+      //project nominal in and out of plane
+      TH1D* h1_eff_in = (TH1D*)h2_eff->ProjectionX("h1_eff_in", 4, -1); 
+      TH1D* h1_eff_out = (TH1D*)h2_eff->ProjectionX("h1_eff_out", 0, 1); 
+      TH1D* h1_eff_icorr = (TH1D*)ScaleSpec(h1_eff_in, hKinI_eff, hreceff);
+      TH1D* h1_eff_ocorr = (TH1D*)ScaleSpec(h1_eff_out, hKinO_eff, hreceff);
+      applyR2(h1_eff_icorr, h1_eff_ocorr, R2);
+      //asign nominal and KE hists to in or out
+      TH1D *h1_eff;
+      if (lowbin == 0)    h1_eff = (TH1D*)h1_eff_ocorr->Clone("h1_eff"); 
+      if (lowbin == 4)    h1_eff = (TH1D*)h1_eff_icorr->Clone("h1_eff"); 
+      TH1D* eff = (TH1D*)h1_eff->Clone("h1_eff_copy");
       histvec.push_back(eff);
       std::pair<TH1D*, TH1D*> efficiency = CalculateDeltaCut(nom, eff, eff, true);
       histvec_up.push_back(efficiency.first);
@@ -147,29 +190,43 @@ void EvaluateSys_low(int lowbin = 0, int highbin = -1, const char* tag = "lo", i
       //========== handle the systematic for the changing the pt rec range +/5 ========
       //+5 GeV/c
       TFile* fplus5 = new TFile(file_plus5.c_str());
+      //Get Kinematic efficiencies
+      TH1D *hKinO_plus5 = new TH1D("hKinO_plus5", "hKinO_plus5", kBinsUnfolded.size()-1, kBinsUnfolded.data());
+      TH1D *hKinI_plus5 = new TH1D("hKinI_plus5", "hKinI_plus5", kBinsUnfolded.size()-1, kBinsUnfolded.data());
+      GetKinematicEfficiency(file_plus5, hKinO_plus5, hKinI_plus5, "Plus5");
+      //retrieve 2D hist
       TH2D* h2_plus5 = (TH2D*)fplus5->Get(histname.c_str());
-      //project
-      TH1D* h1_plus5 = (TH1D*)h2_plus5->ProjectionX("h1_plus5", lowbin, highbin);
-      h1_plus5->SetName("h1_plus5");
-      TH1D* hKinNum_plus5 = (TH1D*)fplus5->Get(histnameKinNum.c_str());
-      hKinNum_plus5->SetName("hKinNum_plus5");
-      TH1D* hKinDenom_plus5 = (TH1D*)fplus5->Get(histnameKinDenom.c_str());
-      hKinDenom_plus5->SetName("hKinDenom_plus5");
-      hKinNum_plus5->Divide(hKinDenom_plus5);
-      TH1D* plus5 = (TH1D*)ScaleSpec(h1_plus5, hKinNum_plus5, hreceff);
+      //project nominal in and out of plane
+      TH1D* h1_plus5_in = (TH1D*)h2_plus5->ProjectionX("h1_plus5_in", 4, -1); 
+      TH1D* h1_plus5_out = (TH1D*)h2_plus5->ProjectionX("h1_plus5_out", 0, 1); 
+      TH1D* h1_plus5_icorr = (TH1D*)ScaleSpec(h1_plus5_in, hKinI_plus5, hreceff);
+      TH1D* h1_plus5_ocorr = (TH1D*)ScaleSpec(h1_plus5_out, hKinO_plus5, hreceff);
+      applyR2(h1_plus5_icorr, h1_plus5_ocorr, R2);
+      //asign nominal and KE hists to in or out
+      TH1D *h1_plus5;
+      if (lowbin == 0)    h1_plus5 = (TH1D*)h1_plus5_ocorr->Clone("h1_plus5"); 
+      if (lowbin == 4)    h1_plus5 = (TH1D*)h1_plus5_icorr->Clone("h1_plus5"); 
+      TH1D* plus5 = (TH1D*)h1_plus5->Clone("h1_plus5_copy");
       histvec.push_back(plus5);
       //-5 GeV/c
       TFile* fmin5 = new TFile(file_min5.c_str());
+      //Get Kinematic efficiencies
+      TH1D *hKinO_min5 = new TH1D("hKinO_min5", "hKinO_min5", kBinsUnfolded.size()-1, kBinsUnfolded.data());
+      TH1D *hKinI_min5 = new TH1D("hKinI_min5", "hKinI_min5", kBinsUnfolded.size()-1, kBinsUnfolded.data());
+      GetKinematicEfficiency(file_min5, hKinO_min5, hKinI_min5, "Min5");
+      //retrieve 2D hist
       TH2D* h2_min5 = (TH2D*)fmin5->Get(histname.c_str());
-      //project
-      TH1D* h1_min5 = (TH1D*)h2_min5->ProjectionX("h1_min5", lowbin, highbin);
-      h1_min5->SetName("h1_min5");
-      TH1D* hKinNum_min5 = (TH1D*)fmin5->Get(histnameKinNum.c_str());
-      hKinNum_min5->SetName("hKinNum_min5");
-      TH1D* hKinDenom_min5 = (TH1D*)fmin5->Get(histnameKinDenom.c_str());
-      hKinDenom_min5->SetName("hKinDenom_min5");
-      hKinNum_min5->Divide(hKinDenom_min5);
-      TH1D* min5 = (TH1D*)ScaleSpec(h1_min5, hKinNum_min5, hreceff);
+      //project nominal in and out of plane
+      TH1D* h1_min5_in = (TH1D*)h2_min5->ProjectionX("h1_min5_in", 4, -1); 
+      TH1D* h1_min5_out = (TH1D*)h2_min5->ProjectionX("h1_min5_out", 0, 1); 
+      TH1D* h1_min5_icorr = (TH1D*)ScaleSpec(h1_min5_in, hKinI_min5, hreceff);
+      TH1D* h1_min5_ocorr = (TH1D*)ScaleSpec(h1_min5_out, hKinO_min5, hreceff);
+      applyR2(h1_min5_icorr, h1_min5_ocorr, R2);
+      //asign nominal and KE hists to in or out
+      TH1D *h1_min5;
+      if (lowbin == 0)    h1_min5 = (TH1D*)h1_min5_ocorr->Clone("h1_min5"); 
+      if (lowbin == 4)    h1_min5 = (TH1D*)h1_min5_icorr->Clone("h1_min5"); 
+      TH1D* min5 = (TH1D*)h1_min5->Clone("h1_min5_copy");
       histvec.push_back(min5);
       std::pair<TH1D*, TH1D*> recRangeUp = CalculateDeltaCut(nom, plus5, plus5, true);
       std::pair<TH1D*, TH1D*> recRangeDown = CalculateDeltaCut(nom, min5, min5, true);
@@ -180,47 +237,49 @@ void EvaluateSys_low(int lowbin = 0, int highbin = -1, const char* tag = "lo", i
   
       // ============== handle the systematic for reweighting the prior ===========                                                               
       TFile* frw = new TFile(file_reweight.c_str());
+      //Get Kinematic efficiencies
+      TH1D *hKinO_rw = new TH1D("hKinO_rw", "hKinO_rw", kBinsUnfolded.size()-1, kBinsUnfolded.data());
+      TH1D *hKinI_rw = new TH1D("hKinI_rw", "hKinI_rw", kBinsUnfolded.size()-1, kBinsUnfolded.data());
+      GetKinematicEfficiency(file_reweight, hKinO_rw, hKinI_rw, "Reweight");
+      //retrieve 2D hist
       TH2D* h2_rw = (TH2D*)frw->Get(histname.c_str());
-      TH1D* h1_rw = (TH1D*)h2_rw->ProjectionX("h1_rw", lowbin, highbin);
-      h1_rw->SetName("h1_rw");
-      TH1D* hKinNum_rw = (TH1D*)frw->Get(histnameKinNum.c_str());
-      hKinNum_rw->SetName("hKinNum_rw");
-      TH1D* hKinDenom_rw = (TH1D*)frw->Get(histnameKinDenom.c_str());
-      hKinDenom_rw->SetName("hKinDenom_rw");
-      hKinNum_rw->Divide(hKinDenom_rw);
-      TH1D* rw = (TH1D*)ScaleSpec(h1_rw, hKinNum_rw, hreceff);
+      //project nominal in and out of plane
+      TH1D* h1_rw_in = (TH1D*)h2_rw->ProjectionX("h1_rw_in", 4, -1); 
+      TH1D* h1_rw_out = (TH1D*)h2_rw->ProjectionX("h1_rw_out", 0, 1); 
+      TH1D* h1_rw_icorr = (TH1D*)ScaleSpec(h1_rw_in, hKinI_rw, hreceff);
+      TH1D* h1_rw_ocorr = (TH1D*)ScaleSpec(h1_rw_out, hKinO_rw, hreceff);
+      applyR2(h1_rw_icorr, h1_rw_ocorr, R2);
+      //asign nominal and KE hists to in or out
+      TH1D *h1_rw;
+      if (lowbin == 0)    h1_rw = (TH1D*)h1_rw_ocorr->Clone("h1_rw"); 
+      if (lowbin == 4)    h1_rw = (TH1D*)h1_rw_icorr->Clone("h1_rw"); 
+      TH1D* rw = (TH1D*)h1_rw->Clone("h1_rw_copy");
       histvec.push_back(rw);
       std::pair<TH1D*, TH1D*> weight = CalculateDeltaCut(nom, rw, rw, true);
       histvec_up.push_back(weight.first);
       histvec_down.push_back(weight.second);
   
-      /*
-      //========== handle the systematic for q/g ========                                                                                                    TFile* fgluons = new TFile(file_gluons.c_str());
-      TH1D* h1_gluons = (TH1D*)fgluons->Get(histname.c_str());
-      h1_gluons->SetName("h1_gluons");
-      TH1D* hKinNum_gluons = (TH1D*)fgluons->Get(histnameKinNum.c_str());
-      hKinNum_gluons->SetName("hKinNum_gluons");
-      TH1D* hKinDenom_gluons = (TH1D*)fgluons->Get(histnameKinDenom.c_str());
-      hKinDenom_gluons->SetName("hKinDenom_gluons");
-      hKinNum_gluons->Divide(hKinDenom_gluons);
-      TH1D* gluons = (TH1D*)ScaleSpec(h1_gluons, hKinNum_gluons, hreceff);
+      //========== handle the systematic for ep resolution ========                                       
+      //retrieve 2D hist
+      if (epup == false)  {
+      TH2D* h2_gluon = (TH2D*)fnom->Get(histname.c_str()); 
+      //project nominal in and out of plane
+      TH1D* h1_gluon_in = (TH1D*)h2_gluon->ProjectionX("h1_gluon_in", 4, -1); 
+      TH1D* h1_gluon_out = (TH1D*)h2_gluon->ProjectionX("h1_gluon_out", 0, 1); 
+      TH1D* h1_gluon_icorr = (TH1D*)ScaleSpec(h1_gluon_in, hKinI_nom, hreceff);
+      TH1D* h1_gluon_ocorr = (TH1D*)ScaleSpec(h1_gluon_out, hKinO_nom, hreceff);
+      applyR2(h1_gluon_icorr, h1_gluon_ocorr, (R2-(0.02*R2)));
+      //asign nominal and KE hists to in or out
+      TH1D *h1_gluons;
+      if (lowbin == 0)    h1_gluons = (TH1D*)h1_gluon_ocorr->Clone("h1_gluons"); 
+      if (lowbin == 4)    h1_gluons = (TH1D*)h1_gluon_icorr->Clone("h1_gluons"); 
+      TH1D* gluons = (TH1D*)h1_gluons->Clone("h1_gluons_copy");
       histvec.push_back(gluons);
-      TFile* fquarks = new TFile(file_quarks.c_str());
-      TH1D* h1_quarks = (TH1D*)fquarks->Get(histname.c_str());
-      h1_quarks->SetName("h1_quarks");
-      TH1D* hKinNum_quarks = (TH1D*)fquarks->Get(histnameKinNum.c_str());
-      hKinNum_quarks->SetName("hKinNum_quarks");
-      TH1D* hKinDenom_quarks = (TH1D*)fquarks->Get(histnameKinDenom.c_str());
-      hKinDenom_quarks->SetName("hKinDenom_quarks");
-      hKinNum_quarks->Divide(hKinDenom_quarks);
-      TH1D* quarks = (TH1D*)ScaleSpec(h1_quarks, hKinNum_quarks, hreceff);
-      //histvec.push_back(quarks);                                                                                                                           std::pair<TH1D*, TH1D*> fragmentationG = CalculateDeltaCut(nom, gluons, gluons, true);
+      std::pair<TH1D*, TH1D*> fragmentationG = CalculateDeltaCut(nom, gluons, gluons, true);
       histvec_up.push_back(fragmentationG.first);
       histvec_down.push_back(fragmentationG.second);
-      std::pair<TH1D*, TH1D*> fragmentationQ = CalculateDeltaCut(nom, quarks, quarks, true);
-      //histvec_up.push_back(fragmentationQ.first);                                                                                                 
-      //histvec_down.push_back(fragmentationQ.second);  
-      */
+      }
+
 
       TFile* frec = new TFile(file_rec.c_str());
 
@@ -229,39 +288,14 @@ void EvaluateSys_low(int lowbin = 0, int highbin = -1, const char* tag = "lo", i
 
 
 
-  //===============================================================
-  //============= Retrieve pp Systematics =========================
-  //===============================================================
-      std::vector<double> binning = {25, 30, 40, 50, 60, 70, 85, 100};  
-
-      //Values from Publication (https://www.hepdata.net/record/ins1733689) 
-      double pp_centers[7] = {27.5, 35, 45, 55, 65, 77.5, 92.5};
-      double pp_values[7] = {0.000412768, 0.000139049, 3.81726*pow(10, -5), 1.33766*pow(10, -5), 5.4954*pow(10, -6), 2.18345*pow(10, -6), 8.16514*pow(10, -7)};
-      double pp_nul[7] = {2.5, 5.0, 5.0, 5.0, 5.0, 7.5, 7.5};
-      double pp_err[7] = {2.51789*pow(10,-5), 9.59436*pow(10,-6), 2.97746*pow(10,-6), 1.17714*pow(10,-6), 5.33054*pow(10,-7), 2.37996*pow(10,-7), 9.96147*pow(10,-8)};
-
-      //Generate Histogram
-      double pTedgepp[8]  = {25, 30, 40, 50, 60, 70, 85, 100};
-      TH1D* hist_pp = new TH1D("refpp_R040_ltb5", "", 7, pTedgepp);
-      for (int i = 0; i < 7; i++)    hist_pp->Fill(pTedgepp[i] + 0.01, pp_values[i]); 
-
-      //Generate TGraphAsymmErrors
-      auto h1_pp_err = new TGraphAsymmErrors(7, pp_centers, pp_values, pp_nul, pp_nul, pp_err, pp_err);
-      
-      //calculate RAA
-      TH1D* numerator = (TH1D*)nom->Rebin(binning.size()-1, "raa", binning.data());
-      numerator->Divide(hist_pp);
-
-      //Write raa_err to file
-      TGraphAsymmErrors* raa_err = MakeError(h1_nom_err, h1_pp_err, numerator, debug);
-
 
 
   //================================================================
   //============= Write Hists to Root File =========================
   //================================================================
       std::stringstream name;
-      name << "preSystematics_R020_3050_" << tag << "_Feb4.root";
+      if (epup == false) name << "preSystematics_R0" << R << "0_3050_" << (R/2) + 1 << "0_" << tag << "_test_Nov21.root";
+      if (epup == true)  name << "preSystematics_R0" << R << "0_3050_" << (R/2) + 1 << "0_" << tag << "sm_Nov21.root";
 
       std::cout << histvec_down.size() << std::endl;
       TFile* fout = new TFile(name.str().c_str(), "recreate");
@@ -270,40 +304,64 @@ void EvaluateSys_low(int lowbin = 0, int highbin = -1, const char* tag = "lo", i
       for (int i = 0; i < histvec_up.size(); i++) histvec_up.at(i)->Write();
       for (int i = 0; i < histvec_down.size(); i++) histvec_down.at(i)->Write();
       h1_nom_err->Write();
-      numerator->Write();
-      raa_err->Write();
       fout->Close();
       name.str("");
 
   //======================================================================
   //============= Plot Hists for Quality Control =========================
   //======================================================================
-  TCanvas *c1 = new TCanvas("hists", "hists", 1000, 500);
+  TCanvas *c1 = new TCanvas("hists", "hists", 500, 1000);
    c1->cd();
    gStyle->SetOptStat(0);
    gStyle->SetPadTickY(1);
    TPad *pad1 = new TPad("pad1", "", 0.0, 0.05, 1.0, 1.0);
-     pad1->SetBottomMargin(0.15); // Upper and lower plot are joined
+     pad1->SetBottomMargin(0.05); // Upper and lower plot are joined
      pad1->Draw();
-   pad1->cd();               // pad1 becomes the current pad   
-   h1_nom->Draw("same");
-     h1_nom->SetLineColor(kRed);
-   h1_iterhigh->Draw("same");
-     h1_iterhigh->SetLineColor(kOrange);
-   h1_iterlow->Draw("same");
-     h1_iterlow->SetLineColor(kYellow);
-   h1_eff->Draw("same");
-     h1_eff->SetLineColor(kGreen);
-   h1_rw->Draw("same");
-     h1_rw->SetLineColor(kPink);
-   h1_plus5->Draw("same");
-     h1_plus5->SetLineColor(kBlue);
-     h1_plus5->SetLineWidth(2);
-   h1_min5->Draw("same");
-     h1_min5->SetLineColor(kViolet);
-  
+     pad1->SetLogy(); 
+  pad1->cd();               // pad1 becomes the current pad   
+   nom->GetXaxis()->SetRangeUser(40.0, 120.0);
+   nom->Draw("same");
+     nom->SetLineColor(kRed+1);
+     nom->SetMarkerColor(kRed+1);
+   iterhigh->Draw("same");
+     iterhigh->SetLineColor(kOrange+7);
+     iterhigh->SetMarkerColor(kOrange+7);
+   iterlow->Draw("same");
+     iterlow->SetLineColor(kYellow);
+     iterlow->SetMarkerColor(kYellow);
+   eff->Draw("same");
+     eff->SetLineColor(kSpring);
+     eff->SetMarkerColor(kSpring);
+   rw->Draw("same");
+     rw->SetLineColor(kGreen+3);
+     rw->SetMarkerColor(kGreen+3);
+   plus5->Draw("same");
+     plus5->SetLineColor(kTeal);
+     plus5->SetMarkerColor(kTeal);
+     plus5->SetLineWidth(2);
+   min5->Draw("same");
+     min5->SetLineColor(kBlue);
+     min5->SetMarkerColor(kBlue);
+   nom->Draw("same");
+  /* if (epup == false) {gluons->Draw("same");
+     gluons->SetLineColor(kViolet);
+     gluons->SetMarkerColor(kViolet);
+   }  
 
+  TLegend *leg = new TLegend(0.65, 0.65, 0.8, 0.8);
+           leg->SetTextSize(0.035);
+           leg->SetBorderSize(0);
+           leg->AddEntry(nom, "nom", "pl");
+           leg->AddEntry(iterhigh, "iterhigh", "pl");
+           leg->AddEntry(iterlow, "iterlow", "pl");
+           leg->AddEntry(eff, "eff", "pl");
+           leg->AddEntry(rw, "rw", "pl");
+           leg->AddEntry(plus5, "plus5", "pl");
+           leg->AddEntry(min5, "min5", "pl");
+           leg->AddEntry(gluons, "gluons", "pl");
+           leg->Draw("same");
 
+*/
 }
 
 
@@ -328,31 +386,6 @@ TH1D* ScaleSpec(TH1D* h1_Orig,  TH1D* heffnum, TH1D* hrecEff){
     int binRec = hrecEff->GetXaxis()->FindBin(pT);
     h1->SetBinContent(i, h1->GetBinContent(i)*(1./(heffnum->GetBinContent(i)*hrecEff->GetBinContent(binRec))));
   }
-
-  // now perform the numeric scaling
-    Double_t Taa; //mb^{-1}
-    if (cent == true)   Taa = 23.3;
-    if (semi == true)   Taa = 3.9; 
-    // Number of selected events in the desired centrality range (30-50%)
-    //Double_t Nevents    = 4619963.0; 
-    string specfilename = "../ESE/AnalysisResults7812.root";   //central
-    //string specfilename = "../Spectra/AnalysisResults7283.root";   //semi-central
-
-
-    const char *lespecfile = specfilename.c_str(); 
-    //Load File/Tree into system
-    TFile *specfile = new TFile(lespecfile);
-
-      TDirectoryFile* tdf = (TDirectoryFile*)specfile->Get("ChargedJetsHadronCF");
-      AliEmcalList *tlist = (AliEmcalList*)tdf->Get("AliAnalysisTaskJetExtractor_Jet_AKTChargedR020_tracks_pT0150_pt_scheme_Rho_Jet_histos"); 
-      TH1F *centhist = (TH1F*)tlist->FindObject("fHistCentrality");
-      centhist->GetXaxis()->SetRangeUser(centl, centr);
-      double Nevents = centhist->Integral();
-
-  //perform the final scaling
-  h1->Scale(1./(2*(0.9-0.4)));
-  h1->Scale(1./Taa); 
-  h1->Scale(1./Nevents, "width");
   return h1;
 }
 
@@ -542,27 +575,64 @@ TGraphAsymmErrors* MakeError(TGraphAsymmErrors* g_PbPb, TGraphAsymmErrors* g_pp,
   return g;
 }
 
+//========================================================
+//========================================================
+//=========== EP Resolution Correction ===================
+//========================================================
+//========================================================
 
-//==================================================================================                                                                                                    
-/*
-TH1D* getRuedigerRecEffML(Double_t radius){
-  TFile* prevResults = TFile::Open("~/ResultsRuediger.root");
-  TDirectoryFile* respDirect = (TDirectoryFile*)prevResults->Get("ResponseMatrices");
-  TDirectoryFile* direct;
-  if (radius == 0.2){
-    direct = (TDirectoryFile*)prevResults->Get("LHC15o_R020_NeuralNetwork_TrainedOnLHC18b8_DetLevel_PbPb_FlatMult_Simplified_000_010_LeadingTrackBias0GeV");
-  }
-  else if (radius == 0.4){
-    direct = (TDirectoryFile*)prevResults->Get("LHC15o_R040_NeuralNetwork_TrainedOnLHC18b8_DetLevel_PbPb_FlatMult_Simplified_000_010_LeadingTrackBias0GeV");
-  }
-  else if (radius == 0.6){
-    direct = (TDirectoryFile*)prevResults->Get("LHC15o_R060_NeuralNetwork_TrainedOnLHC18b8_DetLevel_PbPb_FlatMult_Simplified_000_010_LeadingTrackBias0GeV");
-  }
-  else{
-    std::cout << "Error: Did not recognize jet radius." << std::endl;
-  }
-  TDirectoryFile* unfolding  = (TDirectoryFile*)direct->Get("UnfoldingPlots");
-  TH1D* receffFullML = (TH1D*)unfolding->Get("hJetRecEfficiency");
-  return receffFullML;
-}*/
-//=================================================================================  
+void applyR2(TH1D* NinPre, TH1D* NoutPre, double EPR) {
+        TH1D* sumIO = (TH1D*)NinPre->Clone("sumIO");
+        sumIO->Add(NoutPre);
+        //calculate the v2 bin-by-bin
+        for (int i = 1; i <= NinPre->GetNbinsX(); i++)   {
+          double Nin = NinPre->GetBinContent(i);
+          double Nout = NoutPre->GetBinContent(i);
+          double v2 = (pi/(3*sqrt(3)))*(1./EPR)*(Nin-Nout)/(Nin+Nout);
+          double Nrat = ((2*pi)-(6*sqrt(3)*v2))/((2*pi)+(6*sqrt(3)*v2));
+
+        NinPre->SetBinContent(i, sumIO->GetBinContent(i)/(Nrat+1.0));
+        NoutPre->SetBinContent(i, sumIO->GetBinContent(i)/(1.0+(1.0/Nrat)));
+
+        }
+ }
+
+
+
+//========================================================
+//========================================================
+//=========== Get Kinematic Efficiencies =================
+//========================================================
+//========================================================
+
+
+  void GetKinematicEfficiency(string fname, TH1D *KEout, TH1D *KEin, string fTag) {
+      TFile* f = new TFile(fname.c_str());
+      //Get Kinematic efficiencies
+      TH2D* hKinNum2 = (TH2D*)f->Get("KinPos2");
+      TH2D* hKinDenom2 = (TH2D*)f->Get("KinPre2");
+      stringstream numName, denomName;
+      numName << "Num" << fTag;
+      denomName << "Den" << fTag;
+      hKinNum2->SetName(numName.str().c_str());
+      hKinDenom2->SetName(denomName.str().c_str());
+         //out-of-plane
+         numName << "1";
+         denomName << "1";
+         hKinNum2->GetYaxis()->SetRangeUser(0.0, sqrt(1)/2.0); //out-of-plane
+         TH1D* hKinNumO = (TH1D*)hKinNum2->ProjectionX(numName.str().c_str());
+         hKinDenom2->GetYaxis()->SetRangeUser(0.0, sqrt(1)/2.0);
+         TH1D* hKinDenomO = (TH1D*)hKinDenom2->ProjectionX(denomName.str().c_str());
+         hKinNumO->Divide(hKinDenomO);
+         for (int i = 1; i <= KEout->GetNbinsX(); i++)  KEout->SetBinContent(i, hKinNumO->GetBinContent(i));
+         //in-plane
+         numName << "2";
+         denomName << "2";
+         hKinNum2->GetYaxis()->SetRangeUser(sqrt(3)/2.0, 1.0); //in-plane
+         TH1D* hKinNumI = (TH1D*)hKinNum2->ProjectionX(numName.str().c_str());
+         hKinDenom2->GetYaxis()->SetRangeUser(sqrt(3)/2.0, 1.0);
+         TH1D* hKinDenomI = (TH1D*)hKinDenom2->ProjectionX(denomName.str().c_str());
+         hKinNumI->Divide(hKinDenomI);
+         for (int i = 1; i <= hKinNumI->GetNbinsX(); i++)  KEin->SetBinContent(i, hKinNumI->GetBinContent(i));
+   }
+
