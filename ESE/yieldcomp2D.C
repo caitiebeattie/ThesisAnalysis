@@ -21,6 +21,12 @@ using namespace std;
   bool coar = false;
   bool r02 = false;
   bool r04 = false;
+  bool epA = false;
+  bool epC = false;
+  bool epM = false;
+  bool q2A = false;
+  bool q2C = false;
+  bool q2M = false;
   int centcolor = kViolet+5;
   int semicolor = kCyan-4;
 
@@ -32,8 +38,14 @@ using namespace std;
 int ci = 1756; // color index
 TColor *bluecolor = new TColor(ci, 0, 125, 197);
 vector<const char*> names = {"i1", "i2", "i3", "i4", "i5", "i6", "i7", "i8", "i9", "i10", "i11", "i12","i13", "i14", "i15"};
-TH1D *spacer = new TH1D("spacer", "spacer", 10, 30, 140);
+TH1D *spacer = new TH1D("spacer", "spacer", 10, 30, 120);
 
+double R2_lo = 0.55;
+double R2_hi = 0.68;
+//double R2_lo = 0.69;
+//double R2_hi = 0.9;
+//double R2_lo = 1.0;
+//double R2_hi = 1.0;
 
 //=======================================================================
 //=======================================================================
@@ -97,6 +109,12 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
     const char* coa = "coarse";
     const char* r020 = "R02";
     const char* r040 = "R04";
+    const char* eC = "epV0C";
+    const char* eA = "epV0A";
+    const char* eM = "epV0M";
+    const char* qC = "qV0C";
+    const char* qA = "qV0A";
+    const char* qM = "qV0M";
       for (int i = 2; i < words.size() - 1; i++) {
         s2 << words[i] << " ";
         const char *newword = words[i].c_str();
@@ -108,6 +126,12 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
         if (strncmp(newword, coa, 3) == 0)     coar = true;
         if (strncmp(newword, r020, 3) == 0)     r02 = true;
         if (strncmp(newword, r040, 3) == 0)     r04 = true;
+        if (strncmp(newword, eC, 5) == 0)     epC = true;
+        if (strncmp(newword, eA, 5) == 0)     epA = true;
+        if (strncmp(newword, eM, 5) == 0)     epM = true;
+        if (strncmp(newword, qC, 4) == 0)     q2C = true;
+        if (strncmp(newword, qA, 4) == 0)     q2A = true;
+        if (strncmp(newword, qM, 4) == 0)     q2M = true;
       } 
     double centl, centr;
      if (cent == true)  { 
@@ -122,6 +146,11 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
     int R;
     if (r02 == true)  R = 2;
     if (r04 == true)  R = 4;
+    vector<string> q2labels= {"V0A", "V0C", "V0M"};
+    string q2label;
+    if (q2A == true)  q2label = q2labels[0];
+    if (q2C == true)  q2label = q2labels[1];
+    if (q2M == true)  q2label = q2labels[2];
 
 
 
@@ -210,16 +239,49 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
   //=======================================================
     
         //Get Kinematic Efficiency
-        //File Low
+        //File Low (Inclusive)
         TH1F *kinpre1 = (TH1F*)lefilel->Get("KinPre");
         TH1F *kinpos1 = (TH1F*)lefilel->Get("KinPos");
              TH1F *effic1 = (TH1F*)kinpos1->Clone("effic1");
              effic1->Divide(kinpre1);
-        //File High
+        TH2F* h2kinpreL = (TH2F*)lefilel->Get("KinPre2");
+        TH2F* h2kinposL = (TH2F*)lefilel->Get("KinPos2");
+        //File Low (Out-of-Plane)
+        h2kinpreL->GetYaxis()->SetRangeUser(0.0, sqrt(1)/2.0); //out-of-plane
+        h2kinposL->GetYaxis()->SetRangeUser(0.0, sqrt(1)/2.0); //out-of-plane
+          TH1F* kinoutPreL = (TH1F*)h2kinpreL->ProjectionX("lowOutPre");
+          TH1F* kinoutPosL = (TH1F*)h2kinposL->ProjectionX("lowOutPos");
+          TH1F* efficLowOut = (TH1F*)kinoutPosL->Clone("efficLowOut");
+          efficLowOut->Divide(kinoutPreL);
+        //File Low (In-Plane)
+        h2kinpreL->GetYaxis()->SetRangeUser(sqrt(3)/2.0, 1.0); //in-plane
+        h2kinposL->GetYaxis()->SetRangeUser(sqrt(3)/2.0, 1.0); //in-plane
+          TH1F* kininPreL = (TH1F*)h2kinpreL->ProjectionX("lowInPre");
+          TH1F* kininPosL = (TH1F*)h2kinposL->ProjectionX("lowInPos");
+          TH1F* efficLowIn = (TH1F*)kininPosL->Clone("efficLowIn");
+          efficLowIn->Divide(kininPreL);
+
+        //File High (Inclusive)
         TH1F *kinpre2 = (TH1F*)lefileh->Get("KinPre");
         TH1F *kinpos2 = (TH1F*)lefileh->Get("KinPos");
              TH1F *effic2 = (TH1F*)kinpos2->Clone("effic2");
              effic2->Divide(kinpre2);
+        TH2F* h2kinpreH = (TH2F*)lefileh->Get("KinPre2");
+        TH2F* h2kinposH = (TH2F*)lefileh->Get("KinPos2");
+        //File High (Out-of-Plane)
+        h2kinpreH->GetYaxis()->SetRangeUser(0.0, sqrt(1)/2.0); //out-of-plane
+        h2kinposH->GetYaxis()->SetRangeUser(0.0, sqrt(1)/2.0); //out-of-plane
+          TH1F* kinoutPreH = (TH1F*)h2kinpreH->ProjectionX("lowOutPre");
+          TH1F* kinoutPosH = (TH1F*)h2kinposH->ProjectionX("lowOutPos");
+          TH1F* efficHighOut = (TH1F*)kinoutPosH->Clone("efficHighOut");
+          efficHighOut->Divide(kinoutPreH);
+        //File High (In-Plane)
+        h2kinpreH->GetYaxis()->SetRangeUser(sqrt(3)/2.0, 1.0); //in-plane
+        h2kinposH->GetYaxis()->SetRangeUser(sqrt(3)/2.0, 1.0); //in-plane
+          TH1F* kininPreH = (TH1F*)h2kinpreH->ProjectionX("lowInPre");
+          TH1F* kininPosH = (TH1F*)h2kinposH->ProjectionX("lowInPos");
+          TH1F* efficHighIn = (TH1F*)kininPosH->Clone("efficHighIn");
+          efficHighIn->Divide(kininPreH);
 
        //Get Reconstruction Efficiency
        TFile *recfile = new TFile("../Unfolding/ChargedJetRecEfficiencies.root");
@@ -235,10 +297,16 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
       vector<double> pTedgerebin;
           //if (fine == true)     pTedgerebin = {30, 35, 40, 50, 60, 70, 85, 100, 120, 140};
           //if (coar == true)     pTedgerebin  = {30, 35, 40, 50, 65, 80, 100, 120, 140};
-          if (R == 2)   pTedgerebin  = {35, 40, 50, 65, 80, 100, 120};
-          if (R == 4)   pTedgerebin  = {50, 65, 80, 100, 120};
+          //if (R == 2)   pTedgerebin  = {35, 40, 50, 70, 90, 120};
+          if (R == 2)   pTedgerebin  = {35, 40, 50, 60, 80, 100, 120};
+          //if (R == 4)   pTedgerebin  = {50, 65, 80, 100, 120};
+          if (R == 4)   pTedgerebin  = {50, 60, 80, 100, 120};
       TH1F* efficiency1 = (TH1F*)effic1->Rebin(pTedgerebin.size()-1, "efficiency1", pTedgerebin.data());
       TH1F* efficiency2 = (TH1F*)effic2->Rebin(pTedgerebin.size()-1, "efficiency2", pTedgerebin.data());
+      TH1F* efficiencyHI = (TH1F*)efficHighIn->Rebin(pTedgerebin.size()-1, "efficiencyHI", pTedgerebin.data());
+      TH1F* efficiencyHO = (TH1F*)efficHighOut->Rebin(pTedgerebin.size()-1, "efficiencyHO", pTedgerebin.data());
+      TH1F* efficiencyLI = (TH1F*)efficLowIn->Rebin(pTedgerebin.size()-1, "efficiencyLI", pTedgerebin.data());
+      TH1F* efficiencyLO = (TH1F*)efficLowOut->Rebin(pTedgerebin.size()-1, "efficiencyLO", pTedgerebin.data());
       TH1F* recefficiency = (TH1F*)receffic->Rebin(pTedgerebin.size()-1, "recefficiency", pTedgerebin.data());
             recefficiency->Scale(1.0, "width");
            
@@ -313,18 +381,51 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
        //kinematic efficiency + reconstruction efficiency
        yieldLow->Divide(efficiency1);
        yieldLow->Divide(recefficiency);
-       yieldLowInPlane->Divide(efficiency1);
+       yieldLowInPlane->Divide(efficiencyLI);
        yieldLowInPlane->Divide(recefficiency);
-       yieldLowOutPlane->Divide(efficiency1);
+       yieldLowOutPlane->Divide(efficiencyLO);
        yieldLowOutPlane->Divide(recefficiency);
        yieldHigh->Divide(efficiency2);
        yieldHigh->Divide(recefficiency);
-       yieldHighInPlane->Divide(efficiency2);
+       yieldHighInPlane->Divide(efficiencyHI);
        yieldHighInPlane->Divide(recefficiency);
-       yieldHighOutPlane->Divide(efficiency2);
+       yieldHighOutPlane->Divide(efficiencyHO);
        yieldHighOutPlane->Divide(recefficiency);
 
  
+  //=====================================================
+  //============= Correct Hist Values ===================
+  //=====================================================
+    TH1F* ratioOIHigh = (TH1F*)yieldHighOutPlane->Clone("ratioOIHigh");
+    TH1F* ratioOILow = (TH1F*)yieldLowOutPlane->Clone("ratioOILow");
+    TH1F* sumHigh = (TH1F*)yieldHighOutPlane->Clone("sumHigh");
+          sumHigh->Add(yieldHighInPlane);
+    TH1F* sumLow = (TH1F*)yieldLowOutPlane->Clone("sumLow");
+          sumLow->Add(yieldLowInPlane);
+    for (int i = 1; i <= yieldLow->GetNbinsX(); i++)   {
+        //calculate the v2
+        double Nin_lo = yieldLowInPlane->GetBinContent(i);
+        double Nout_lo = yieldLowOutPlane->GetBinContent(i);
+        double v2_lo = (pi/(3*sqrt(3)))*(1./R2_lo)*(Nin_lo-Nout_lo)/(Nin_lo+Nout_lo);
+        double Nrat_lo = ((2*pi)-(6*sqrt(3)*v2_lo))/((2*pi)+(6*sqrt(3)*v2_lo));
+        //double v2_lo = (pi/4)*(1./R2_lo)*(Nin_lo-Nout_lo)/(Nin_lo+Nout_lo);
+        //double Nrat_lo = ((pi/4.0)-v2_lo)/((pi/4.0)+v2_lo);
+        double Nin_hi = yieldHighInPlane->GetBinContent(i);
+        double Nout_hi = yieldHighOutPlane->GetBinContent(i);
+        double v2_hi = (pi/(3*sqrt(3)))*(1./R2_hi)*(Nin_hi-Nout_hi)/(Nin_hi+Nout_hi);
+        double Nrat_hi = ((2*pi)-(6*sqrt(3)*v2_hi))/((2*pi)+(6*sqrt(3)*v2_hi));
+        //double v2_hi = (pi/(4))*(1./R2_hi)*(Nin_hi-Nout_hi)/(Nin_hi+Nout_hi);
+        //double Nrat_hi = ((pi/4.0)-v2_hi)/((pi/4.0)+v2_hi);
+
+
+        ratioOIHigh->SetBinContent(i, Nrat_hi);
+        ratioOILow->SetBinContent(i, Nrat_lo);
+
+        yieldLowInPlane->SetBinContent(i, sumLow->GetBinContent(i)/(Nrat_lo+1.0));
+        yieldLowOutPlane->SetBinContent(i, sumLow->GetBinContent(i)/(1.0+(1.0/Nrat_lo)));
+        yieldHighInPlane->SetBinContent(i, sumHigh->GetBinContent(i)/(Nrat_hi+1.0));
+        yieldHighOutPlane->SetBinContent(i, sumHigh->GetBinContent(i)/(1.0+(1.0/Nrat_hi)));
+    }
   //=====================================================
   //============= Calculate the Yield Ratio =============
   //=====================================================
@@ -333,11 +434,11 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
       TH1F* yieldratio =(TH1F*)yieldHigh->Clone("yieldratio");
       yieldratio->Divide(yieldLow);
         //out/in (high)
-        TH1F* ratioOIHigh = (TH1F*)yieldHighOutPlane->Clone("ratioOIHigh");
-        ratioOIHigh->Divide(yieldHighInPlane);
+        //TH1F* ratioOIHigh = (TH1F*)yieldHighOutPlane->Clone("ratioOIHigh");
+        //ratioOIHigh->Divide(yieldHighInPlane);
         //out/in (low)
-        TH1F* ratioOILow = (TH1F*)yieldLowOutPlane->Clone("ratioOILow");
-        ratioOILow->Divide(yieldLowInPlane);
+        //TH1F* ratioOILow = (TH1F*)yieldLowOutPlane->Clone("ratioOILow");
+        //ratioOILow->Divide(yieldLowInPlane);
 
       double lowedge;
       if (R == 2)  lowedge = 35.0;
@@ -395,9 +496,11 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
 
       //Penguin
       //coordinates for TGraphErrors
-      double bincenters3050[8] = {31., 36., 42., 52., 62., 73., 88., 108.5};
-      double bincentersR02[5] = {37.5, 45.0, 57.5, 72.5, 90.0};
-      double bincentersR04[3] = {57.5, 72.5, 90.0};
+      //double bincenters3050[8] = {31., 36., 42., 52., 62., 73., 88., 108.5};
+      double bincentersR02[6] = {37.5, 45.0, 55.0, 70.0, 90.0, 110.0};
+      //double bincentersR02[6] = {37.5, 45.0, 57.5, 72.5, 90.0, 110.0};
+      double bincentersR04[4] = {55.0, 70.0, 90.0, 110.0};
+      //double bincentersR04[4] = {57.5, 72.5, 90.0, 110.0};
       double bincenters3050_hi[3] = {54.5, 69.5, 87.};//, 52., 62., 73., 88., 108.5};
         double exl_hi[3] = {4.5, 4.5, 7.};
         double exr_hi[3] = {10.5, 10.5, 13.};
@@ -451,33 +554,44 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
       double nul3050[8] = {2.5, 2.5, 5.0, 5.0, 5.0, 7.5, 7.5, 10.0};
       double nul3050_crop[8] = {0.75, 0.75, 1.5, 1.5, 1.5, 2.25, 2.25, 3.};
       double nul3050_short[6] = {2.5, 5.0, 5.0, 5.0, 7.5, 7.5};
-      double nulR02[5] = {2.5, 5.0, 7.5, 7.5, 10.0};
-      double nulR04[3] = {7.5, 7.5, 10.0};
+      double nulR02[6] = {2.5, 5.0, 5.0, 10.0, 10.0, 10.0};
+      //double nulR02[6] = {2.5, 5.0, 7.5, 7.5, 10.0, 10.0};
+      double nulR04[4] = {5.0, 10.0, 10.0, 10.0};
+      //double nulR04[4] = {7.5, 7.5, 10.0, 10.0};
 
 
 
       //------------ 
       //yield errors
       //-------------
-     string date;
-        if (R == 2) date = "Aug15";
-        if (R == 4) date = "Sep9";
-     TFile *eFileLo, *eFileHi, *eFileLoOut, *eFileLoIn, *eFileHiOut, *eFileHiIn;
+     string date, date1;
+        if (R == 2) date = "Nov21";
+        if (R == 4) date = "Nov21";
+        date1 = "Sep26";
+      TFile *eFileLo, *eFileHi, *eFileLoOut, *eFileLoOutSM, *eFileLoIn, *eFileLoInSM, *eFileHiOut, *eFileHiOutSM, *eFileHiIn, *eFileHiInSM;
       eFileLo = new TFile("../Systematics/Systematics3050_lo.root");
         eFileHi = new TFile("../Systematics/Systematics3050_hi.root");
         eFileLoOut = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_loout_%s.root", R, date.c_str()));
+        eFileLoOutSM = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_looutsm_%s.root", R, date1.c_str()));
         eFileLoIn = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_loin_%s.root", R, date.c_str()));
+        eFileLoInSM = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_loinsm_%s.root", R, date1.c_str()));
         eFileHiOut = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_hiout_%s.root", R, date.c_str()));
+        eFileHiOutSM = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_hioutsm_%s.root", R, date1.c_str()));
         eFileHiIn = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_hiin_%s.root", R, date.c_str()));
+        eFileHiInSM = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_hiinsm_%s.root", R, date1.c_str()));
 
       //get hists from file
       TH1F *errorsLo = (TH1F*)eFileLo->Get("h_err"); 
         TH1F *errorsHi = (TH1F*)eFileHi->Get("h_err"); 
         TH1F *errorsLoOut = (TH1F*)eFileLoOut->Get("h_err"); 
+        TH1F *errorsLoOutSM = (TH1F*)eFileLoOutSM->Get("h_err"); 
         TH1F *errorsLoIn = (TH1F*)eFileLoIn->Get("h_err"); 
+        TH1F *errorsLoInSM = (TH1F*)eFileLoInSM->Get("h_err"); 
         TH1F *errorsHighOut = (TH1F*)eFileHiOut->Get("h_err"); 
+        TH1F *errorsHighOutSM = (TH1F*)eFileHiOutSM->Get("h_err"); 
         TH1F *errorsHighIn = (TH1F*)eFileHiIn->Get("h_err"); 
-      int startbinerror = errorsLo->FindBin(lowedge);  //was 30.01, changed 8.16.2022
+        TH1F *errorsHighInSM = (TH1F*)eFileHiInSM->Get("h_err"); 
+      int startbinerror = errorsLoIn->FindBin(lowedge);  //was 30.01, changed 8.16.2022
 
       //get fractional errors
       double syst_FracLow[8] = {errorsLo->GetBinContent(startbinerror),  errorsLo->GetBinContent(startbinerror+1), 
@@ -492,18 +606,34 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
                                  errorsLoIn->GetBinContent(startbinerror+2), errorsLoIn->GetBinContent(startbinerror+3),
                                  errorsLoIn->GetBinContent(startbinerror+4), errorsLoIn->GetBinContent(startbinerror+5),
                                  errorsLoIn->GetBinContent(startbinerror+6), errorsLoIn->GetBinContent(startbinerror+7)};
+      double syst_FracLowInSM[8] = {errorsLoInSM->GetBinContent(startbinerror),  errorsLoInSM->GetBinContent(startbinerror+1),
+                                 errorsLoInSM->GetBinContent(startbinerror+2), errorsLoInSM->GetBinContent(startbinerror+3),
+                                 errorsLoInSM->GetBinContent(startbinerror+4), errorsLoInSM->GetBinContent(startbinerror+5),
+                                 errorsLoInSM->GetBinContent(startbinerror+6), errorsLoInSM->GetBinContent(startbinerror+7)};
       double syst_FracLowOut[8] = {errorsLoOut->GetBinContent(startbinerror),   errorsLoOut->GetBinContent(startbinerror+1),
                                    errorsLoOut->GetBinContent(startbinerror+2), errorsLoOut->GetBinContent(startbinerror+3),
                                    errorsLoOut->GetBinContent(startbinerror+4), errorsLoOut->GetBinContent(startbinerror+5),
                                    errorsLoOut->GetBinContent(startbinerror+6), errorsLoOut->GetBinContent(startbinerror+7)};
+      double syst_FracLowOutSM[8] = {errorsLoOutSM->GetBinContent(startbinerror),   errorsLoOutSM->GetBinContent(startbinerror+1),
+                                   errorsLoOutSM->GetBinContent(startbinerror+2), errorsLoOutSM->GetBinContent(startbinerror+3),
+                                   errorsLoOutSM->GetBinContent(startbinerror+4), errorsLoOutSM->GetBinContent(startbinerror+5),
+                                   errorsLoOutSM->GetBinContent(startbinerror+6), errorsLoOutSM->GetBinContent(startbinerror+7)};
       double syst_FracHighIn[8] = {errorsHighIn->GetBinContent(startbinerror),  errorsHighIn->GetBinContent(startbinerror+1),
                                    errorsHighIn->GetBinContent(startbinerror+2), errorsHighIn->GetBinContent(startbinerror+3),
                                    errorsHighIn->GetBinContent(startbinerror+4), errorsHighIn->GetBinContent(startbinerror+5),
                                    errorsHighIn->GetBinContent(startbinerror+6), errorsHighIn->GetBinContent(startbinerror+7)};
+      double syst_FracHighInSM[8] = {errorsHighInSM->GetBinContent(startbinerror),  errorsHighInSM->GetBinContent(startbinerror+1),
+                                   errorsHighInSM->GetBinContent(startbinerror+2), errorsHighInSM->GetBinContent(startbinerror+3),
+                                   errorsHighInSM->GetBinContent(startbinerror+4), errorsHighInSM->GetBinContent(startbinerror+5),
+                                   errorsHighInSM->GetBinContent(startbinerror+6), errorsHighInSM->GetBinContent(startbinerror+7)};
       double syst_FracHighOut[8] = {errorsHighOut->GetBinContent(startbinerror), errorsHighOut->GetBinContent(startbinerror+1),
                                     errorsHighOut->GetBinContent(startbinerror+2), errorsHighOut->GetBinContent(startbinerror+3),
                                     errorsHighOut->GetBinContent(startbinerror+4), errorsHighOut->GetBinContent(startbinerror+5),
                                     errorsHighOut->GetBinContent(startbinerror+6), errorsHighOut->GetBinContent(startbinerror+7)};
+      double syst_FracHighOutSM[8] = {errorsHighOutSM->GetBinContent(startbinerror), errorsHighOutSM->GetBinContent(startbinerror+1),
+                                    errorsHighOutSM->GetBinContent(startbinerror+2), errorsHighOutSM->GetBinContent(startbinerror+3),
+                                    errorsHighOutSM->GetBinContent(startbinerror+4), errorsHighOutSM->GetBinContent(startbinerror+5),
+                                    errorsHighOutSM->GetBinContent(startbinerror+6), errorsHighOutSM->GetBinContent(startbinerror+7)};
       //get absolute errors
       double syslo[8] = {yieldLow->GetBinContent(startbin)*syst_FracLow[0], yieldLow->GetBinContent(startbin+1)*syst_FracLow[1], 
                         yieldLow->GetBinContent(startbin+2)*syst_FracLow[2], yieldLow->GetBinContent(startbin+3)*syst_FracLow[3], 
@@ -521,6 +651,14 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
                             yieldLowOutPlane->GetBinContent(startbin+5)*syst_FracLowOut[5],
                             yieldLowOutPlane->GetBinContent(startbin+6)*syst_FracLowOut[6],
                             yieldLowOutPlane->GetBinContent(startbin+7)*syst_FracLowOut[7]};
+      double syslooutSM[8] = {yieldLowOutPlane->GetBinContent(startbin)*syst_FracLowOutSM[0],
+                            yieldLowOutPlane->GetBinContent(startbin+1)*syst_FracLowOutSM[1],
+                            yieldLowOutPlane->GetBinContent(startbin+2)*syst_FracLowOutSM[2], 
+                            yieldLowOutPlane->GetBinContent(startbin+3)*syst_FracLowOutSM[3], 
+                            yieldLowOutPlane->GetBinContent(startbin+4)*syst_FracLowOutSM[4], 
+                            yieldLowOutPlane->GetBinContent(startbin+5)*syst_FracLowOutSM[5],
+                            yieldLowOutPlane->GetBinContent(startbin+6)*syst_FracLowOutSM[6],
+                            yieldLowOutPlane->GetBinContent(startbin+7)*syst_FracLowOutSM[7]};
      double syshiout[8] = {yieldHighOutPlane->GetBinContent(startbin)*syst_FracHighOut[0], 
                            yieldHighOutPlane->GetBinContent(startbin+1)*syst_FracHighOut[1],
                            yieldHighOutPlane->GetBinContent(startbin+2)*syst_FracHighOut[2], 
@@ -529,10 +667,22 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
                            yieldHighOutPlane->GetBinContent(startbin+5)*syst_FracHighOut[5], 
                            yieldHighOutPlane->GetBinContent(startbin+6)*syst_FracHighOut[6],
                            yieldHighOutPlane->GetBinContent(startbin+7)*syst_FracHighOut[7]};
+     double syshioutSM[8] = {yieldHighOutPlane->GetBinContent(startbin)*syst_FracHighOutSM[0], 
+                           yieldHighOutPlane->GetBinContent(startbin+1)*syst_FracHighOutSM[1],
+                           yieldHighOutPlane->GetBinContent(startbin+2)*syst_FracHighOutSM[2], 
+                           yieldHighOutPlane->GetBinContent(startbin+3)*syst_FracHighOutSM[3],
+                           yieldHighOutPlane->GetBinContent(startbin+4)*syst_FracHighOutSM[4],
+                           yieldHighOutPlane->GetBinContent(startbin+5)*syst_FracHighOutSM[5], 
+                           yieldHighOutPlane->GetBinContent(startbin+6)*syst_FracHighOutSM[6],
+                           yieldHighOutPlane->GetBinContent(startbin+7)*syst_FracHighOutSM[7]};
      double sysloin[8] = {yieldLowInPlane->GetBinContent(startbin)*syst_FracLowIn[0], yieldLowInPlane->GetBinContent(startbin+1)*syst_FracLowIn[1],
                           yieldLowInPlane->GetBinContent(startbin+2)*syst_FracLowIn[2], yieldLowInPlane->GetBinContent(startbin+3)*syst_FracLowIn[3],
                           yieldLowInPlane->GetBinContent(startbin+4)*syst_FracLowIn[4], yieldLowInPlane->GetBinContent(startbin+5)*syst_FracLowIn[5],
                           yieldLowInPlane->GetBinContent(startbin+6)*syst_FracLowIn[6], yieldLowInPlane->GetBinContent(startbin+7)*syst_FracLowIn[7]};
+     double sysloinSM[8] = {yieldLowInPlane->GetBinContent(startbin)*syst_FracLowInSM[0], yieldLowInPlane->GetBinContent(startbin+1)*syst_FracLowInSM[1],
+                          yieldLowInPlane->GetBinContent(startbin+2)*syst_FracLowInSM[2], yieldLowInPlane->GetBinContent(startbin+3)*syst_FracLowInSM[3],
+                          yieldLowInPlane->GetBinContent(startbin+4)*syst_FracLowInSM[4], yieldLowInPlane->GetBinContent(startbin+5)*syst_FracLowInSM[5],
+                          yieldLowInPlane->GetBinContent(startbin+6)*syst_FracLowInSM[6], yieldLowInPlane->GetBinContent(startbin+7)*syst_FracLowInSM[7]};
      double syshiin[8] = {yieldHighInPlane->GetBinContent(startbin)*syst_FracHighIn[0], 
                           yieldHighInPlane->GetBinContent(startbin+1)*syst_FracHighIn[1],
                           yieldHighInPlane->GetBinContent(startbin+2)*syst_FracHighIn[2],
@@ -541,6 +691,14 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
                           yieldHighInPlane->GetBinContent(startbin+5)*syst_FracHighIn[5],
                           yieldHighInPlane->GetBinContent(startbin+6)*syst_FracHighIn[6], 
                           yieldHighInPlane->GetBinContent(startbin+7)*syst_FracHighIn[7]};
+     double syshiinSM[8] = {yieldHighInPlane->GetBinContent(startbin)*syst_FracHighInSM[0], 
+                          yieldHighInPlane->GetBinContent(startbin+1)*syst_FracHighInSM[1],
+                          yieldHighInPlane->GetBinContent(startbin+2)*syst_FracHighInSM[2],
+                          yieldHighInPlane->GetBinContent(startbin+3)*syst_FracHighInSM[3],
+                          yieldHighInPlane->GetBinContent(startbin+4)*syst_FracHighInSM[4],
+                          yieldHighInPlane->GetBinContent(startbin+5)*syst_FracHighInSM[5],
+                          yieldHighInPlane->GetBinContent(startbin+6)*syst_FracHighInSM[6], 
+                          yieldHighInPlane->GetBinContent(startbin+7)*syst_FracHighInSM[7]};
 
 
 
@@ -549,11 +707,12 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
       //-------------
       TFile *eFileHiLo, *eFileHiInOut, *eFileLoInOut, *eFileAllInOut, *eFileHiInOutUp, *eFileLoInOutUp;
       eFileHiLo = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_hilo_%s.root", R, date.c_str()));
+      //eFileHiInOut = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_hiinout_%s.root", R, date1.c_str()));
       eFileHiInOut = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_hiinout_%s.root", R, date.c_str()));
       eFileLoInOut = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_loinout_%s.root",R, date.c_str()));
       eFileAllInOut = new TFile("../Systematics/Systematics3050_allinout.root");
-      eFileHiInOutUp = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_hiinoutup_%s.root", R, date.c_str()));
-      eFileLoInOutUp = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_loinoutup_%s.root", R, date.c_str()));
+      eFileHiInOutUp = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_hiinout_%s.root", R, date.c_str()));
+      eFileLoInOutUp = new TFile(Form("../Systematics/Systematics3050_R0%.0d0_loinout_%s.root", R, date.c_str()));
       TH1F *errorsHiLo = (TH1F*)eFileHiLo->Get("h_err"); 
       TH1F *errorsHiInOut = (TH1F*)eFileHiInOut->Get("h_err"); 
       TH1F *errorsLoInOut = (TH1F*)eFileLoInOut->Get("h_err");
@@ -563,27 +722,31 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
  
       
      //Low q2, out/in
-     double syslooutin[5] = {lowvalues3050[0]*errorsLoInOut->GetBinContent(startbinerror), 
+     double syslooutin[6] = {lowvalues3050[0]*errorsLoInOut->GetBinContent(startbinerror), 
                              lowvalues3050[1]*errorsLoInOut->GetBinContent(startbinerror+1),
                              lowvalues3050[2]*errorsLoInOut->GetBinContent(startbinerror+2),
                              lowvalues3050[3]*errorsLoInOut->GetBinContent(startbinerror+3),
-                             lowvalues3050[4]*errorsLoInOut->GetBinContent(startbinerror+4)};
-     double syslooutinup[5] = {lowvalues3050[0]*errorsLoInOut->GetBinContent(startbinerror), 
+                             lowvalues3050[4]*errorsLoInOut->GetBinContent(startbinerror+4),
+                             lowvalues3050[5]*errorsLoInOut->GetBinContent(startbinerror+5)};
+     double syslooutinup[6] = {lowvalues3050[0]*errorsLoInOut->GetBinContent(startbinerror), 
                              lowvalues3050[1]*errorsLoInOutUp->GetBinContent(startbinerror+1),
                              lowvalues3050[2]*errorsLoInOutUp->GetBinContent(startbinerror+2),
                              lowvalues3050[3]*errorsLoInOutUp->GetBinContent(startbinerror+3),
-                             lowvalues3050[4]*errorsLoInOutUp->GetBinContent(startbinerror+4)};
+                             lowvalues3050[4]*errorsLoInOutUp->GetBinContent(startbinerror+4),
+                             lowvalues3050[5]*errorsLoInOutUp->GetBinContent(startbinerror+5)};
      //High q2, out/in 
-     double syshioutin[5] = {highvalues3050[0]*errorsHiInOut->GetBinContent(startbinerror),  
+     double syshioutin[6] = {highvalues3050[0]*errorsHiInOut->GetBinContent(startbinerror),  
                              highvalues3050[1]*errorsHiInOut->GetBinContent(startbinerror+1),
                              highvalues3050[2]*errorsHiInOut->GetBinContent(startbinerror+2),
                              highvalues3050[3]*errorsHiInOut->GetBinContent(startbinerror+3), 
-                             highvalues3050[4]*errorsHiInOut->GetBinContent(startbinerror+4)};
-     double syshioutinup[5] = {highvalues3050[0]*errorsHiInOut->GetBinContent(startbinerror),  
+                             highvalues3050[4]*errorsHiInOut->GetBinContent(startbinerror+4),
+                             highvalues3050[5]*errorsHiInOut->GetBinContent(startbinerror+5)};
+     double syshioutinup[6] = {highvalues3050[0]*errorsHiInOut->GetBinContent(startbinerror),  
                              highvalues3050[1]*errorsHiInOutUp->GetBinContent(startbinerror+1),
                              highvalues3050[2]*errorsHiInOutUp->GetBinContent(startbinerror+2),
                              highvalues3050[3]*errorsHiInOutUp->GetBinContent(startbinerror+3), 
-                             highvalues3050[4]*errorsHiInOutUp->GetBinContent(startbinerror+4)};
+                             highvalues3050[4]*errorsHiInOutUp->GetBinContent(startbinerror+4),
+                             highvalues3050[5]*errorsHiInOutUp->GetBinContent(startbinerror+5)};
  
      //High/low q2
      double sysraerrors[7] = {1.23456, 0.183724, 0.0961714, 0.0676367, 0.0438335, 0.0414292, 0};
@@ -606,14 +769,14 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
       if (R == 2) {
          bincenters = (const double*)bincentersR02;
          nul = (const double*)nulR02;
-         nbins = 5;}
+         nbins = 6;}
       if (R == 4) {
          bincenters = (const double*)bincentersR04;
          nul = (const double*) nulR04;
-         nbins = 3;}
+         nbins = 4;}
 
       //ESE ratios
-      auto systlo = new TGraphErrors(8, bincenters3050, nomlo, nul3050, syslo);
+      /*auto systlo = new TGraphErrors(8, bincenters3050, nomlo, nul3050, syslo);
            systlo->SetMarkerSize(0.6);
            systlo->SetMarkerStyle(20);
            systlo->SetFillColorAlpha(kCaitieBlue, 0.15);
@@ -625,7 +788,7 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
            systhi->SetFillColorAlpha(kCaitiePink, 0.2);
            systhi->SetMarkerColor(kCaitiePink);
            systhi->SetLineColor(kCaitiePink);
-
+      */
       //ratio of high q2/low q2
       auto systra = new TGraphErrors(nbins, bincenters, nomrat, nul, sysra);
            systra->SetMarkerSize(0.8);
@@ -648,6 +811,9 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
       systlooutinAsym->SetFillColorAlpha(kCaitieLightPink, 0.2);
       systlooutinAsym->SetMarkerColor(kCaitiePink);
       systlooutinAsym->SetLineColor(kCaitiePink);
+      //systlooutinAsym->SetFillColorAlpha(kSunPurple, 0.2);
+      //systlooutinAsym->SetMarkerColor(kSunPurple);
+      //systlooutinAsym->SetLineColor(kSunPurple);
 
       /*auto systhioutin = new TGraphErrors(6, bincenters3050_short, highvalues3050s, nul3050_short, syshioutin);
       systhioutin->SetMarkerSize(0.9);
@@ -661,11 +827,14 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
       systhioutinAsym->SetFillColorAlpha(kCaitieBlue, 0.3);   
       systhioutinAsym->SetMarkerColor(kCaitieDarkBlue);        
       systhioutinAsym->SetLineColor(kCaitieDarkBlue);       
+      //systhioutinAsym->SetFillColorAlpha(kSunOrange, 0.3);   
+      //systhioutinAsym->SetMarkerColor(kSunOrange);        
+      //systhioutinAsym->SetLineColor(kSunOrange);       
 
 
       //4 yield spectra
       //auto sys_yieldLowIn = new TGraphAsymmErrors(nbins, bincenters3050_li, nomloin, exl_li, exr_li, sysloin, sysloin);
-      auto sys_yieldLowIn = new TGraphErrors(nbins, bincenters, nomloin, nul, sysloin);
+      auto sys_yieldLowIn = new TGraphAsymmErrors(nbins, bincenters, nomloin, nul, nul, sysloin, sysloin);
       sys_yieldLowIn->SetMarkerSize(1.0);
       sys_yieldLowIn->SetMarkerStyle(20);
       sys_yieldLowIn->SetFillColorAlpha(kSunPurple, 0.0);
@@ -674,7 +843,7 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
       sys_yieldLowIn->SetLineColor(kSunPurple);
 
       //auto sys_yieldLowOut = new TGraphAsymmErrors(nbins, bincenters3050_lo, nomloout, exl_lo, exr_lo, sysloout, sysloout);
-      auto sys_yieldLowOut = new TGraphErrors(nbins, bincenters, nomloout, nul, sysloout);
+      auto sys_yieldLowOut = new TGraphAsymmErrors(nbins, bincenters, nomloout, nul, nul, sysloout, sysloout);
       sys_yieldLowOut->SetMarkerSize(1.0);
       sys_yieldLowOut->SetMarkerStyle(20);
       sys_yieldLowOut->SetFillColorAlpha(kSunPink, 0.0);
@@ -683,7 +852,7 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
       sys_yieldLowOut->SetLineWidth(2);
 
       //auto sys_yieldHighIn = new TGraphAsymmErrors(nbins, bincenters3050_hi, nomhiin, exl_hi, exr_hi, syshiin, syshiin);
-      auto sys_yieldHighIn = new TGraphErrors(nbins, bincenters, nomhiin, nul, syshiin);
+      auto sys_yieldHighIn = new TGraphAsymmErrors(nbins, bincenters, nomhiin, nul, nul, syshiin, syshiin);
       sys_yieldHighIn->SetMarkerSize(1.0);
       sys_yieldHighIn->SetMarkerStyle(21);
       sys_yieldHighIn->SetFillColorAlpha(kCaitieBlue, 0.4);
@@ -691,7 +860,7 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
       sys_yieldHighIn->SetLineColor(kSunBlue);
     
       //auto sys_yieldHighOut = new TGraphAsymmErrors(nbins, bincenters3050_ho, nomhiout, exl_ho, exr_ho, syshiout, syshiout);
-      auto sys_yieldHighOut = new TGraphErrors(nbins, bincenters, nomhiout, nul, syshiout);
+      auto sys_yieldHighOut = new TGraphAsymmErrors(nbins, bincenters, nomhiout, nul, nul, syshiout, syshiout);
       sys_yieldHighOut->SetMarkerSize(1.0);
       sys_yieldHighOut->SetMarkerStyle(21);
       sys_yieldHighOut->SetFillColorAlpha(kSunOrange, 0.4);
@@ -704,24 +873,24 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
   //========== Polynomials =============
   //====================================
   //fit polynomial
-  TF1* linFit1 = new TF1("linFit1", "pol0", 35,100);
-  linFit1->SetRange(35, 100);
+  TF1* linFit1 = new TF1("linFit1", "pol0", 35,120);
+  linFit1->SetRange(50, 120);
   ratioOILow->Fit(linFit1, "N R I", "");
-  linFit1->SetLineColor(kCaitieDarkBlue); 
+  linFit1->SetLineColor(kViolet); 
  
-  TF1* linFit2 = new TF1("linFit2", "pol0", 35,100);
-  linFit2->SetRange(35, 100);
+  TF1* linFit2 = new TF1("linFit2", "pol0", 35,120);
+  linFit2->SetRange(50, 120);
   ratioOIHigh->Fit(linFit2, "N R I", "");
-  linFit2->SetLineColor(kViolet);
+  linFit2->SetLineColor(kCaitieDarkBlue);
 
   //====================================
   //========== create lines ============
   //====================================
   TLine *line = new TLine(lbound, 1, rbound, 1);
   line->SetLineStyle(2);
-  TLine *sline = new TLine(30.0, 1, 100.0, 1);
+  TLine *sline = new TLine(30.0, 1, 120.0, 1);
   sline->SetLineStyle(2);
-  TLine *mline = new TLine(35.0, 1, 100.0, 1);
+  TLine *mline = new TLine(35.0, 1, 120.0, 1);
   mline->SetLineStyle(2);
 
   TLine *dcut = new TLine(lbound, 0.9, rbound, 0.9);
@@ -750,7 +919,7 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
         gen->SetTextSize(0.04);
         gen->SetBorderSize(0);
         gen->SetFillColorAlpha(kWhite, 0.0);
-        gen->AddEntry((TObject*)0, "Work in Progress", "");
+        gen->AddEntry((TObject*)0, "ALICE", "");
         if (cent == true)    gen->AddEntry((TObject*)0, Form("#sqrt{#it{s}_{NN}} = 5.02 TeV %.0f#font[122]{-}%.0f%% Pb#font[122]{-}Pb", centl, centr), "");
         if (semi == true)    gen->AddEntry((TObject*)0, Form("%.0f#font[122]{-}%.0f%% Pb#font[122]{-}Pb, #sqrt{#it{s}_{NN}} = 5.02 TeV", centl, centr), "");
         gen->AddEntry((TObject*)0, Form("Charged-particle jets, anti-#it{k}_{T}, #it{R} = 0.%.0d", R), "");
@@ -759,7 +928,7 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
    auto gen2 = new TLegend(0.25, 0.7, 0.7, 0.9);
         gen2->SetTextSize(0.035);
         gen2->SetBorderSize(0);
-        gen2->AddEntry((TObject*)0, "Work in Progess", "");
+        gen2->AddEntry((TObject*)0, "ALICE", "");
         if (cent == true)    gen2->AddEntry((TObject*)0, Form("%.0f#font[122]{-}%.0f%% Pb#font[122]{-}Pb, 5.02 TeV", centl, centr), "");
         if (semi == true)    gen2->AddEntry((TObject*)0, Form("%.0f#font[122]{-}%.0f%% Pb#font[122]{-}Pb, #sqrt{#it{s}_{NN}} = 5.02 TeV", centl, centr), "");
         gen2->AddEntry((TObject*)0, Form("Charged-particle jets, anti-#it{k}_{T}, #it{R} = 0.%.0d", R), "");
@@ -775,27 +944,27 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
    auto datadetails = new TLegend(0.65, 0.75, 0.85, 0.9);
         datadetails->SetTextSize(0.035);
         datadetails->SetBorderSize(0);
-        datadetails->AddEntry(systhioutinAsym, "30\% highest #it{q}_{2}^{V0M}", "plf");
-        datadetails->AddEntry(systlooutinAsym, "10-40\% lowest #it{q}_{2}^{V0M}", "plf");
+        datadetails->AddEntry(systhioutinAsym, Form("30%s largest #it{q}_{2}^{%s}", "%", q2label.c_str()), "plf");
+        datadetails->AddEntry(systlooutinAsym, Form("30%s smallest #it{q}_{2}^{%s}", "%", q2label.c_str()), "plf");
 
    auto esedetails = new TLegend(0.55, 0.15, 0.75, 0.3);
         esedetails->SetTextSize(0.04);
         esedetails->SetBorderSize(0);
         esedetails->AddEntry(systra, "large (70\%-100\%)/small (10\%-40\%) #it{q}_{2}^{V0M}", "plf");
 
-   auto specleg = new TLegend(0.6, 0.4, 0.85, 0.525);
+  /* auto specleg = new TLegend(0.6, 0.4, 0.85, 0.525);
         specleg->SetTextSize(0.055);
         specleg->SetBorderSize(0);
         specleg->AddEntry(systhi, "30\% highest #it{q}_{2}", "plf");
         specleg->AddEntry(systlo, "30\% lowest #it{q}_{2}", "plf");  
-
+  */
    auto yieldLeg = new TLegend(0.2, 0.15, 0.4, 0.3);
         yieldLeg->SetTextSize(0.03);
         yieldLeg->SetBorderSize(0);
         yieldLeg->AddEntry(sys_yieldHighIn, "30\% large #it{q}_{2}, in-plane", "plf");
         yieldLeg->AddEntry(sys_yieldHighOut, "30\% large #it{q}_{2}, out-of-plane", "plf");
-        yieldLeg->AddEntry(sys_yieldLowIn, "10-40\% small #it{q}_{2}, in-plane", "plf");
-        yieldLeg->AddEntry(sys_yieldLowOut, "10-40\% small #it{q}_{2}, out-of-plane", "plf");
+        yieldLeg->AddEntry(sys_yieldLowIn, "30\% small #it{q}_{2}, in-plane", "plf");
+        yieldLeg->AddEntry(sys_yieldLowOut, "30\% small #it{q}_{2}, out-of-plane", "plf");
 
 
   //====================================
@@ -822,16 +991,16 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
              spacer->SetXTitle("#it{p}_{T, ch jet} (GeV/#it{c})");
              spacer->GetXaxis()->SetTitleSize(0.035);
              spacer->GetYaxis()->SetTitleSize(0.04);
-             spacer->GetXaxis()->SetRangeUser(35.0, 140.0);
-             spacer->SetYTitle("Ratio (out-of-plane/in-plane)");
+             spacer->GetXaxis()->SetRangeUser(35.0, 120.0);
+             spacer->SetYTitle("Ratio (out-of-plane/in-plane, V0A)");
          spacer->Draw("same");
-         ratioOILow->GetXaxis()->SetRangeUser(ratioOILow->GetBinLowEdge(startbin), 120.0);
+         //ratioOILow->GetXaxis()->SetRangeUser(ratioOILow->GetBinLowEdge(startbin), 100.0);
          ratioOIHigh->GetXaxis()->SetRangeUser(ratioOIHigh->GetBinLowEdge(startbin), 120.0);
-         ratioOILow->Draw("same");
+         //ratioOILow->Draw("same");
          ratioOIHigh->Draw("same");
-         systlooutinAsym->Draw("ezp 5 same");
          systhioutinAsym->GetXaxis()->SetRangeUser(35.0, 120.0);
          systhioutinAsym->Draw("ezp 5 same");
+         systlooutinAsym->Draw("ezp 5 same");
          ratioOILow->Draw("same");
          ratioOIHigh->Draw("same");
      //caitie->Draw("ezp 2 same");
@@ -859,6 +1028,18 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
             << ratioOILow->GetBinError(i+1)/ratioOILow->GetBinContent(i+1) << "	"
             << ratioOIHigh->GetBinError(i+1)/ratioOIHigh->GetBinContent(i+1)<<"\n"; 
        }
+ 
+   stringstream foutname0;
+   foutname0 << "ESEplots_R0" << R << "_LTB7_Nov21.root";
+   TFile *fout0=new TFile (foutname0.str().c_str(), "RECREATE");
+   fout0->cd();
+   ratioOIHigh->Write();
+   ratioOILow->Write();
+   systlooutinAsym->SetName("systematicsLo");
+   systlooutinAsym->Write();
+   systhioutinAsym->SetName("systematicsHi");
+   systhioutinAsym->Write();
+
 
   TCanvas *c2 = new TCanvas("QM Plot 2", lofile, 800, 600);
   c2->cd();
@@ -882,7 +1063,7 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
              yieldratio->GetXaxis()->SetTitleSize(0.04);
              yieldratio->GetYaxis()->SetTitleSize(0.04);
              yieldratio->GetXaxis()->SetRangeUser(yieldratio->GetBinLowEdge(startbin), 120.0);
-             spacer->SetYTitle("Ratio (large/small #it{q}_{2})");
+             spacer->SetYTitle("Ratio (out-of-plane/in-plane, V0A)");
          spacer->Draw("same");
          yieldratio->Draw("same");
          systra->Draw("ezp 5 same");
@@ -968,7 +1149,7 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
           pad3->Draw();
           pad3->cd();
           pad3->SetLogy();
-       yieldLowInPlane->GetXaxis()->SetRangeUser(35.0, 100.0);
+       yieldLowInPlane->GetXaxis()->SetRangeUser(35.0, 120.0);
        yieldLowInPlane->SetTitle("");
        yieldLowInPlane->SetXTitle("#it{p}_{T} (GeV/#it{c})");
        yieldLowInPlane->GetXaxis()->SetTitleOffset(1.2);
@@ -988,10 +1169,12 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
        yieldHighOutPlane->Draw("same ex0");
        yieldLowInPlane->Draw("same ex0");
        yieldLowOutPlane->Draw("same ex0");
+       //yieldLow->Draw("same");
+       //yieldHigh->Draw("same");
        gen2->Draw("same");
 
    stringstream foutname2;
-   foutname2 << "spectraplots_R0" << R << ".root";
+   foutname2 << "spectraplots_R0" << R << "_Nov21.root";
    TFile *fout2=new TFile (foutname2.str().c_str(), "RECREATE");
    fout2->cd();
    yieldLow->SetName("yieldLow");
@@ -1016,9 +1199,85 @@ void yieldcomp2D (int iteration, string lofilename, string hifilename, int plane
        TPad *pad4 = new TPad("pad4", "", 0.0, 0.05, 1.0, 1.0);
        pad4->Draw();
        pad4->cd();
+       for (int i = 1;  i <= recefficiency->GetNbinsX(); i++)   recefficiency->SetBinError(i, 0.0001);
+       recefficiency->SetMinimum(0.01);
+       recefficiency->SetMaximum(1.09);
        recefficiency->Draw("same");
 
- }
+  TCanvas *c5 = new TCanvas("ke1", "ke1", 500, 500);
+  c5->cd();
+       gStyle->SetOptStat(0);
+       gStyle->SetPadTickX(1);
+       gStyle->SetPadTickY(1);
+       TPad *pad5 = new TPad("pad5", "", 0.0, 0.05, 1.0, 1.0);
+       pad5->Draw();
+       pad5->cd();
+       for (int i = 1;  i <= efficiency1->GetNbinsX(); i++)   efficiency1->SetBinError(i, 0.0001);
+       for (int i = 1;  i <= efficiency2->GetNbinsX(); i++)   efficiency2->SetBinError(i, 0.0001);
+       efficiency1->SetTitle("");
+       efficiency1->GetXaxis()->SetRangeUser(20.0, 140.0);
+       efficiency1->SetMinimum(0.01);
+       efficiency1->SetMaximum(1.09);
+            setcolor(efficiency1, kBlue);
+            setcolor(efficiency2, kRed);
+       efficiency1->Draw("same");  //low
+       efficiency2->Draw("same");  //high
+       TLegend *effleg = new TLegend(0.5, 0.2, 0.85, 0.4);
+       effleg->SetBorderSize(0);
+       effleg->SetTextSize(0.035);
+       effleg->AddEntry(efficiency1, "Small q2", "plf");
+       effleg->AddEntry(efficiency2, "Large q2", "plf");
+       effleg->Draw("same");
+
+
+  TCanvas *c6 = new TCanvas("ke high", "ke high", 500, 500);
+  c6->cd();
+       gStyle->SetOptStat(0);
+       gStyle->SetPadTickX(1);
+       gStyle->SetPadTickY(1);
+       TPad *pad6 = new TPad("pad6", "", 0.0, 0.05, 1.0, 1.0);
+       pad6->Draw();
+       pad6->cd();
+       efficiencyHI->SetTitle("");
+       efficiencyHI->GetXaxis()->SetRangeUser(20.0, 140.0);
+       efficiencyHI->SetMinimum(0.01);
+       efficiencyHI->SetMaximum(1.09);
+       for (int i = 1;  i <= efficiencyHI->GetNbinsX(); i++)   efficiencyHI->SetBinError(i, 0.0001);
+       for (int i = 1;  i <= efficiencyHO->GetNbinsX(); i++)   efficiencyHO->SetBinError(i, 0.0001);
+            setcolor(efficiencyHI, kBlue);
+            setcolor(efficiencyHO, kRed);
+       efficiencyHI->Draw("same");
+       efficiencyHO->Draw("same");
+       TLegend *effleg1 = new TLegend(0.5, 0.2, 0.85, 0.4);
+       effleg1->SetBorderSize(0);
+       effleg1->SetTextSize(0.035);
+       effleg1->AddEntry(efficiencyHI, "Large #it{q}_{2}, in-plane", "plf");
+       effleg1->AddEntry(efficiencyHO, "Large #it{q}_{2}, out-of-plane", "plf");
+       effleg1->Draw("same");
+
+  TCanvas *c7 = new TCanvas("ke low", "ke low", 500, 500);
+  c7->cd();
+     TPad *pad7 = new TPad("pad7", "pad7", 0.0, 0.05, 1.0, 1.0);
+     pad7->Draw();
+     pad7->cd();
+       for (int i = 1;  i <= efficiencyLI->GetNbinsX(); i++)   efficiencyLI->SetBinError(i, 0.0001);
+       for (int i = 1;  i <= efficiencyLO->GetNbinsX(); i++)   efficiencyLO->SetBinError(i, 0.0001);
+       efficiencyLI->SetTitle("");
+       efficiencyLI->GetXaxis()->SetRangeUser(20.0, 140.0);
+       efficiencyLI->SetMinimum(0.01);
+       efficiencyLI->SetMaximum(1.09);
+            setcolor(efficiencyLI, kBlue);
+            setcolor(efficiencyLO, kRed);
+       efficiencyLI->Draw("same");
+       efficiencyLO->Draw("same");
+       TLegend *effleg2 = new TLegend(0.5, 0.2, 0.85, 0.4);
+       effleg2->SetBorderSize(0);
+       effleg2->SetTextSize(0.035);
+       effleg2->AddEntry(efficiencyHI, "Small #it{q}_{2}, in-plane", "plf");
+       effleg2->AddEntry(efficiencyHO, "Small #it{q}_{2}, out-of-plane", "plf");
+       effleg2->Draw("same");
+
+}
 
 
 
