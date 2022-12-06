@@ -67,7 +67,9 @@ double pi = 3.1415926;
 // Unfolding
 //==============================================================================
 
-void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 2, TString cFiles2="files15.txt")
+//if R = 0.4, use files25.txt
+//if R = 0.2, use files27.txt
+void RooTrunc_ese2D(double centl, double centr, int ese, int trunc = 0, int R = 4, int epcut = 2, TString cFiles2="files25.txt")
 {
 #ifdef __CINT__
   gSystem->Load("libRooUnfold");
@@ -94,9 +96,9 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
   if (centl == 30.0 && centr == 50.0)   semi = true;
 
   //establish unfolding range
-  double truncation;
-  if (cent == true)   truncation = 50.0;
-  if (semi == true)   truncation = 35.0;
+  double truncation = -1.0;
+  if (R == 2)    truncation = 20.0;
+  if (R == 4)    truncation = 35.0;
 
 
 
@@ -104,8 +106,14 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
   //=============================================================================
   //=================   Initialize Histograms and Responses  ====================   
   //=============================================================================
-  std::vector<double> kBinsUnfolded = {10.0, 25.0, 30.0, 40.0, 50.0, 60.0, 70.0, 85.0, 100.0, 120.0, 140.0, 190.0/*, 250.0*/};
-  std::vector<double> kBinsMeasured = {truncation, 40.0, 50.0, 60.0, 70.0, 85.0, 100.0, 120.0};   //semi-central
+  std::vector<double> kBinsUnfolded = {10.0, 20.0, 25.0, 30.0, 35.0, 40.0, 50.0, 60.0, 80.0, 100.0, 120.0, 140.0, 190.0, 250.0};
+  std::vector<double> kBinsMeasured;
+        if (R == 2) {
+           if (trunc == 0) kBinsMeasured = {truncation-5.0, 25.0, 30.0, 35.0, 40.0, 50.0, 60.0, 80.0, 100.0, 120.0};   //semi-central
+           if (trunc == 1) kBinsMeasured = {truncation+5.0, 30.0, 40.0, 45.0, 50.0, 60.0, 80.0, 100.0, 120.0};   }
+        if (R == 4) {
+           if (trunc == 0) kBinsMeasured = {truncation-5.0, 35.0, 40.0, 50.0, 60.0, 80.0, 100.0, 120.0};   //semi-central
+           if (trunc == 1) kBinsMeasured = {truncation+5.0, 50.0, 60.0, 80.0, 100.0, 120.0};   }
   //std::vector<double> kBinsMeasured = {truncation, 50.0, 60, 70, 85, 100, 120};   //central
   std::vector<double> kBinsEPangle = {0.0, sqrt(1)/2.0, sqrt(2)/2.0, sqrt(3)/2.0, 1.0};
 
@@ -123,6 +131,12 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
   //Kinematic efficiency
   TH1F *hKinPre = new TH1F("KinPre", "KinPre", kBinsUnfolded.size()-1, kBinsUnfolded.data());
   TH1F *hKinPos = new TH1F("KinPos", "KinPos", kBinsUnfolded.size()-1, kBinsUnfolded.data());
+  TH2F *h2KinPre = new TH2F("KinPre2", "KinPre2", kBinsUnfolded.size()-1, kBinsUnfolded.data(), kBinsEPangle.size()-1, kBinsEPangle.data());
+  TH2F *h2KinPos = new TH2F("KinPos2", "KinPos2", kBinsUnfolded.size()-1, kBinsUnfolded.data(), kBinsEPangle.size()-1, kBinsEPangle.data());
+        hKinPre->Sumw2();
+        hKinPos->Sumw2();  
+        h2KinPre->Sumw2();
+        h2KinPos->Sumw2();
   
   //Responses
   RooUnfoldResponse response1D;
@@ -138,7 +152,8 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
    
     //Raw Spectra from Trains
     string rootfilename;
-    if (semi == true)   rootfilename = "AnalysisResults7812.root";
+    if (R == 2)   rootfilename = "AnalysisResults8144.root";
+    if (R == 4)   rootfilename = "AnalysisResults8119.root";
     const char *lerootfile = rootfilename.c_str(); 
 
     //Load File/Tree into system
@@ -146,44 +161,64 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
 
       //Calculate q2 percentiles
       TDirectoryFile *qnfile = (TDirectoryFile*)lefile->Get("PWGJE_QnVectorTender");
-      TList *qnlist = (TList*)qnfile->Get("coutputQnVectorTender_Q2V0C_EPV0C");
+      TList *qnlist = (TList*)qnfile->Get("coutputQnVectorTender_Q2_EP");
       TH2F *q2hist2D = (TH2F*)qnlist->FindObject("fHistqnVsCentrV0C");
+      //TH2F *qAhist2D = (TH2F*)qnlist->FindObject("fHistqnVsCentrV0A");
       //initialize variables used to calculate percentiles
-      long int percentileticker = 0;                                   //number of entries, starting from lowest q2 and counting upward
-      int percentilen = 1;                                             //number percentile we're on
       vector<long double> percentiles(0);                              //vector that stores 10th, 20th etc percentile per cent bin
       vector<vector<long double>>  allPercent(0);                      //vector that stores percentiles vectors for all centralities
       int centdiff = (int)centr-(int)centl;
       int leftc, rightc;
       //get percentiles in bins of 1% centrality
       for (int j = 0; j < centdiff; j++) {
+        long int percentileticker = 0;                                   //number of entries, starting from lowest q2 and counting upward
+        int percentilen = 1;                                             //number percentile we're on
         leftc = (int)centl + j; 
         rightc = (int)centl + j + 1;    
         q2hist2D->GetXaxis()->SetRangeUser(leftc, rightc);
         TH1F *q2hist = (TH1F*)q2hist2D->ProjectionY();
-        q2hist->Rebin(100);
+        //q2hist->Rebin(100);
         long double percentilemarker = (long double)q2hist->GetEntries()/10.0;      //number of entries that compose 10% of sample
-        for (int i = 0; i <= 100; i++)   {
+        for (int i = 0; i <= q2hist->GetNbinsX(); i++)   {
           percentileticker += q2hist->GetBinContent(i);         //increment the percentileticker
           if (percentileticker >= percentilen*percentilemarker)  {
               percentiles.push_back(q2hist->GetBinCenter(i));
               percentilen++;
           }
-        if (i == 100)  {
+        if (i == q2hist->GetNbinsX())  {
             allPercent.push_back(percentiles);
             percentiles.resize(0);
             break;}             
         }
       }
-      TH1D *perc20 = new TH1D("perc20", "perc20", centdiff, centl, centr);
-      TH1D *perc80 = new TH1D("perc80", "perc80", centdiff, centl, centr);
-      for (int i = 1; i <= centdiff; i++) {
-        perc20->SetBinContent(i, allPercent[i-1][1]);
-        perc80->SetBinContent(i, allPercent[i-1][7]);
-      }
-      perc20->SetLineColor(kRed);
-      perc80->SetLineColor(kRed);
 
+      /*
+      //calculate percentiles in V0A
+      vector<long double> percentilesA(0);                              //vector that stores 10th, 20th etc percentile per cent bin
+      vector<vector<long double>>  allPercentA(0);                      //vector that stores percentiles vectors for all centralities
+      //get percentiles in bins of 1% centrality
+      for (int j = 0; j < centdiff; j++) {
+        long int percentileticker = 0;                                   //number of entries, starting from lowest q2 and counting upward
+        int percentilen = 1;                                             //number percentile we're on
+        leftc = (int)centl + j; 
+        rightc = (int)centl + j + 1;    
+        qAhist2D->GetXaxis()->SetRangeUser(leftc, rightc);
+        TH1F *qAhist = (TH1F*)qAhist2D->ProjectionY();
+        qAhist->Rebin(100);
+        long double percentilemarker = (long double)qAhist->GetEntries()/10.0;      //number of entries that compose 10% of sample
+        for (int i = 0; i <= 100; i++)   {
+          percentileticker += qAhist->GetBinContent(i);         //increment the percentileticker
+          if (percentileticker >= percentilen*percentilemarker)  {
+              percentilesA.push_back(qAhist->GetBinCenter(i));
+              percentilen++;
+          }
+        if (i == 100)  {
+            allPercentA.push_back(percentilesA);
+            percentilesA.resize(0);
+            break;}             
+        }
+      }
+     */
 
 
     //Determine Extractor Bin Scaling
@@ -195,18 +230,28 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
     TTree *T = nullptr;
     if (R == 2) lefile->GetObject("JetTree_AliAnalysisTaskJetExtractor_Jet_AKTChargedR020_tracks_pT0150_pt_scheme_Rho_Jet", T);
     if (R == 4) lefile->GetObject("JetTree_AliAnalysisTaskJetExtractor_Jet_AKTChargedR040_tracks_pT0150_pt_scheme_Rho_Jet", T);
-    float jetpT, centra, qvec, ep;
+    float jetpT, centra, qvec, qchec, ep;
     T->SetBranchAddress("Jet_Pt", &jetpT);
     T->SetBranchAddress("Event_Centrality", &centra);
-    T->SetBranchAddress("Event_Q2Vector", &qvec);    
-    T->SetBranchAddress("Jet_EPangle", &ep);    
+    T->SetBranchAddress("Event_Q2VectorV0C", &qvec);  
+    //T->SetBranchAddress("Event_Q2Check", &qchec);  
+    T->SetBranchAddress("Jet_EPangleV0A", &ep);    
     int entries = T->GetEntries();
     for (int i = 0; i < entries; i++)   {
        T->GetEntry(i);     
        if (centra < centl || centra > centr)                                    continue;       
-       if (jetpT < truncation || jetpT > 120.0)                                 continue;
-       if (ese == 0)           {if (qvec > allPercent[int(centra-centl)][2])    continue;}  //20th percentile
-       if (ese == 1)           {if (qvec < allPercent[int(centra-centl)][6])    continue;}  //80th percentile
+       if (trunc == 0) {if (jetpT < truncation-5.0 || jetpT > 120.0)                continue;}
+       if (trunc == 1) {if (jetpT < truncation+5.0 || jetpT > 120.0)                continue;}
+       if (ese == 0)           {                                                       //20th percentile
+          if (qvec > allPercent[int(centra-centl)][2])       continue;
+             }
+       if (ese == 1)           {
+          if (qvec < allPercent[int(centra-centl)][6])    continue;
+          }  //80th percentile
+      if (ese == 3)           {
+          if (qvec < allPercent[int(centra-centl)][0])    continue;
+          if (qvec > allPercent[int(centra-centl)][3])    continue;
+      } 
        if (epcut == 0)         {if (abs(cos(ep)) > sqrt(2)/2.0)                 continue;}  //out-of-plane
        if (epcut == 1)         {if (abs(cos(ep)) < sqrt(2)/2.0)                 continue;}  //in-plane
        int scaleindex = -1;
@@ -289,9 +334,9 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
     mc->SetBranchAddress("Jet_MC_MatchedDetLevelJet_Pt", &ptdet);
     mc->SetBranchAddress("Event_Centrality", &centrality);
     mc->SetBranchAddress("Jet_Area", &area);
-    mc->SetBranchAddress("Event_Q2Vector", &q2);
-    mc->SetBranchAddress("Jet_EPangle", &epangle);
-    mc->SetBranchAddress("Jet_MC_MatchedPartLevelJet_EPangle", &epPar);
+    mc->SetBranchAddress("Event_Q2VectorV0C", &q2);
+    mc->SetBranchAddress("Jet_EPangleV0A", &epangle);
+    mc->SetBranchAddress("Jet_MC_MatchedPartLevelJet_EPangleV0A", &epPar);
     
   
   int countm=0;
@@ -302,11 +347,11 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
       double EBscale = 1.;
       if(ptJet >= -20. && ptJet < 10.)         EBscale = 10.;
       else if(ptJet >= 10. && ptJet < 20.)     EBscale = 1.0/0.01;
-      else if(ptJet >= 20. && ptJet < 30.)     EBscale = 1.0/0.03;
+      else if(ptJet >= 20. && ptJet < 30.)     EBscale = 1.0/0.05;
       else if(ptJet >= 30. && ptJet < 40.)     EBscale = 1.0/0.15;
-      else if(ptJet >= 40. && ptJet < 60.)     EBscale = 1.0/0.20;
-      else if(ptJet >= 60. && ptJet < 80.)     EBscale = 1.0/0.20;
-      else if(ptJet >= 80. && ptJet < 100.)    EBscale = 1.0/0.20;
+      else if(ptJet >= 40. && ptJet < 60.)     EBscale = 1.0/0.25;
+      else if(ptJet >= 60. && ptJet < 80.)     EBscale = 1.0/0.35;
+      else if(ptJet >= 80. && ptJet < 100.)    EBscale = 1.0/0.35;
       else if(ptJet >= 100. && ptJet < 140.)   EBscale = 1.0/0.15;
       else if(ptJet >= 140. && ptJet < 200.)   EBscale = 1.0/0.05;
       scalefactor*=EBscale;
@@ -317,6 +362,10 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
       if (epcut == 1)    {if (abs(cos(epangle)) < sqrt(2)/2.0) continue;}  //in-plane
       if (ese == 0)           {if (q2 > allPercent[int(centrality-centl)][2])    continue;}  //20th percentile
       if (ese == 1)           {if (q2 < allPercent[int(centrality-centl)][6])    continue;}  //80th percentile
+      if (ese == 3)           {
+                               if (q2 < allPercent[int(centrality-centl)][0])    continue;
+                               if (q2 > allPercent[int(centrality-centl)][3])    continue;
+      } 
 
       preeta++;      
       if (abs(eta) > (0.9-(double)R*0.1))  continue;  //TPC fiducial cut
@@ -325,8 +374,13 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
   
       
       hKinPre->Fill(ptPar, scalefactor);
-      if (ptJet < truncation || ptJet > 120) continue;
+      h2KinPre->Fill(ptPar, abs(cos(epPar)), scalefactor);
+      if (trunc == 0) {
+         if (ptJet < truncation-5.0 || ptJet > 120) continue;}
+      if (trunc == 1) {
+         if (ptJet < truncation+5.0 || ptJet > 120) continue;}
       hKinPos->Fill(ptPar, scalefactor);
+      h2KinPos->Fill(ptPar, abs(cos(epPar)), scalefactor);
       if (ptPar < 10.0 || ptJet < 10.0 )   continue; 
 
 	  h1true->Fill(ptPar, scalefactor);
@@ -348,11 +402,18 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
   //==================================================================================
   //==========================   Setup the Outputs   =================================   
   //==================================================================================
-
+    string tag;
+    if (trunc == 0) tag = "_lopT_";
+    if (trunc == 1) tag = "_hipT_";
     stringstream ww;
-    if (ese == 0)  ww << "UnfoldingData_2D_non_R02_" << Form("%.0f", centl) << Form("%.0f", centr) << "_lo30_hipT_Feb4.root"; 
-    if (ese == 1)  ww << "UnfoldingData_2D_non_R02_" << Form("%.0f", centl) << Form("%.0f", centr) << "_hi30_hipT_Feb4.root"; 
-    if (ese == 2)  ww << "UnfoldingData_2D_non_R02_" << Form("%.0f", centl) << Form("%.0f", centr) << "_allq_hipT_Feb4.root"; 
+    if (ese == 0) ww << "UnfoldingData_2D_non_R0" << R << "_qV0C_epV0A_" << Form("%.0f", centl) 
+                     << Form("%.0f", centr) <<"_lo30"<< tag << Form("%.0f", truncation) << "_Nov17.root"; 
+    if (ese == 1) ww << "UnfoldingData_2D_non_R0" << R << "_qV0C_epV0A_" << Form("%.0f", centl) 
+                     << Form("%.0f", centr) <<"_hi30"<< tag << Form("%.0f", truncation) << "_Nov17.root"; 
+    if (ese == 2) ww << "UnfoldingData_2D_non_R0" << R << "_qV0C_epV0A_" << Form("%.0f", centl)
+                     << Form("%.0f", centr) <<"_allq"<< tag << Form("%.0f", truncation) << "_Nov17.root"; 
+    if (ese == 3) ww << "UnfoldingData_2D_non_R0" << R << "_qV0C_epV0A_" << Form("%.0f", centl)
+                     << Form("%.0f", centr) <<"_1040"<< tag << Form("%.0f", truncation) << "_Nov17.root";
     TFile *fout=new TFile (ww.str().c_str(),"RECREATE");
     fout->cd();
     h1raw->SetName("raw");
@@ -369,6 +430,8 @@ void RooTrunc_ese2D(double centl, double centr, int ese, int R = 2, int epcut = 
     specraw2->Write();
     hKinPre->Write();
     hKinPos->Write();
+    h2KinPre->Write();
+    h2KinPos->Write();
     response1D.Write();
     //projection of the response1D onto the truth axis
     TH1D* htruth = (TH1D*)response1D.Htruth();

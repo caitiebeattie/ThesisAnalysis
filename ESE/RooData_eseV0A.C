@@ -61,12 +61,7 @@ double pi = 3.1415926;
  long double totevents = 0.0;
 
 
-double p0 = 0.0;
-double p1 = 0.0;
-double p2 = 0.0;
 
-
-void calcReweightingParams(string rootfile, bool pT = true, int jetR = 2);
 
 //==============================================================================
 // Unfolding
@@ -74,7 +69,7 @@ void calcReweightingParams(string rootfile, bool pT = true, int jetR = 2);
 
 //if R = 0.4, use files25.txt
 //if R = 0.2, use files27.txt
-void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2, TString cFiles2="files25.txt")
+void RooData_eseV0A(double centl, double centr, int ese, int R = 4, int epcut = 2, TString cFiles2="files29.txt")
 {
 #ifdef __CINT__
   gSystem->Load("libRooUnfold");
@@ -104,72 +99,50 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
   double truncation;
   if (R == 2)   truncation = 20.0;
   if (R == 4)   truncation = 30.0;
+  //if (R == 4)   truncation = 50.0;
 
-  //========================================================================
-  //=================   Reweighting Parameters  ============================   
-  //========================================================================
+  //establish detectors
+  string epDet = "V0A";
+  string q2Det = "V0C";
 
-  string lofilename = "UnfoldingData_2D_non_R04_qV0C_epV0A_3050_lo30_30_Dec1.root";
-  string hifilename = "UnfoldingData_2D_non_R04_qV0C_epV0A_3050_hi30_30_Dec1.root";
-
-  //pT params (lo/hi/in refer to different ESE classes. Change filename as appropriate)
-  calcReweightingParams(lofilename.c_str(), 1, R);
-  double pTlo1 = p0;
-  double pTlo2 = p1;
-  double pTlo3 = p2;
-  calcReweightingParams(hifilename.c_str(), 1, R);
-  double pThi1 = p0;
-  double pThi2 = p1;
-  double pThi3 = p2;
-  calcReweightingParams(lofilename.c_str(), 1, R);
-  double pTin1 = p0; 
-  double pTin2 = p1;
-  double pTin3 = p2;   //in here means 10-40
-  
-  //event-plane params
-  calcReweightingParams(lofilename.c_str(), 0, R);
-  double eplo1 = p0;
-  double eplo2 = p1;
-  double eplo3 = p2;
-  calcReweightingParams(hifilename.c_str(), 0, R);
-  double ephi1 = p0;
-  double ephi2 = p1;
-  double ephi3 = p2;
-  calcReweightingParams(lofilename.c_str(), 0, R);
-  double epin1 = p0;
-  double epin2 = p1;
-  double epin3 = p2;
 
   //=============================================================================
   //=================   Initialize Histograms and Responses  ====================   
   //=============================================================================
+  //std::vector<double> kBinsUnfolded = {10.0, 20.0, 25.0, 30.0, 35.0, 40.0, 50.0, 70.0, 90.0, 120.0, 140.0, 190.0, 250.0};
   std::vector<double> kBinsUnfolded = {10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 50.0, 60.0, 80.0, 100.0, 120.0, 140.0, 190.0, 250.0};
-  std::vector<double> kBinsMeasured; 
-           if (R == 2) kBinsMeasured = {truncation, 25.0, 30.0, 35.0, 40.0, 50.0, 60.0, 80.0, 100.0, 120.0};   //semi-central
-           if (R == 4) kBinsMeasured = {truncation, 35.0, 40.0, 50.0, 60.0, 80.0, 100.0, 120.0};   //semi-central
+  //std::vector<double> kBinsUnfolded = {10.0, 20.0, 40.0, 50.0, 60.0, 70.0, 85.0, 100.0, 120.0};
+  //std::vector<double> kBinsUnfolded = {10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 85.0, 100.0, 120.0};
+  std::vector<double> kBinsMeasured;
+        if (R == 2)  kBinsMeasured = {truncation, 25.0, 30.0, 35.0, 40.0, 50.0, 60.0, 80.0, 100.0, 120.0};   //R=0.2
+        //if (R == 2)  kBinsMeasured = {truncation, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 85.0, 100.0, 120.0};
+        //if (R == 2)  kBinsMeasured = {truncation, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 85.0, 100.0};
+        //if (R == 4)  kBinsMeasured = {truncation, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 85.0, 100.0};
+        //if (R == 4)  kBinsMeasured = {truncation, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 85.0, 100.0, 120.0};
+        if (R == 4)  kBinsMeasured = {truncation, 35.0, 40.0, 50.0, 60.0, 80.0, 100.0, 120.0};   //R=0.2
   std::vector<double> kBinsEPangle = {0.0, sqrt(1)/2.0, sqrt(2)/2.0, sqrt(3)/2.0, 1.0};
 
   //raw spectra from embedding (pseudo-data)
   TH1D *h1raw = new TH1D("raw1", "raw1", kBinsMeasured.size()-1, kBinsMeasured.data());
   TH2D *h2raw = new TH2D("raw2", "raw2", kBinsMeasured.size()-1, kBinsMeasured.data(), kBinsEPangle.size()-1, kBinsEPangle.data());
   TH1D *h1rawep = new TH1D("h1rawep", "h1rawep", kBinsEPangle.size()-1, kBinsEPangle.data());
-          h1raw->Sumw2();
-          h2raw->Sumw2();
-          h1rawep->Sumw2();
+        h1raw->Sumw2();
+        h2raw->Sumw2();
+        h1rawep->Sumw2();
   //true spectra from embedding
   TH1F *h1true = new TH1F("true1", "true1", kBinsUnfolded.size()-1, kBinsUnfolded.data());
   TH2F *h2true = new TH2F("true2", "true2", kBinsUnfolded.size()-1, kBinsUnfolded.data(), kBinsEPangle.size()-1, kBinsEPangle.data());
-          h1true->Sumw2();
-          h2true->Sumw2();
+        h1true->Sumw2();
+        h2true->Sumw2();
 
   //raw spectra from data
   TH1D* specraw1 = new TH1D("specraw1", "specraw1", kBinsMeasured.size()-1, kBinsMeasured.data());
   TH2D* specraw2 = new TH2D("specraw2", "specraw2", kBinsMeasured.size()-1, kBinsMeasured.data(), kBinsEPangle.size()-1, kBinsEPangle.data());
   TH1D* specrawep1 = new TH1D("specrawep1", "specrawep1", kBinsEPangle.size()-1, kBinsEPangle.data());
-          specraw1->Sumw2();
-          specraw2->Sumw2();
-          specrawep1->Sumw2();
-    
+        specraw1->Sumw2();
+        specraw2->Sumw2();
+        specrawep1->Sumw2();
+
   //Kinematic efficiency
   TH1F *hKinPre = new TH1F("KinPre", "KinPre", kBinsUnfolded.size()-1, kBinsUnfolded.data());
   TH1F *hKinPos = new TH1F("KinPos", "KinPos", kBinsUnfolded.size()-1, kBinsUnfolded.data());
@@ -179,13 +152,12 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
         hKinPos->Sumw2();  
         h2KinPre->Sumw2();
         h2KinPos->Sumw2();
-    
+
   //Responses
   RooUnfoldResponse response1D;
   response1D.Setup(h1raw, h1true);
   RooUnfoldResponse response2D;
   response2D.Setup(h2raw, h2true);
-
 
 
   //=============================================================================
@@ -195,7 +167,9 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
     //Raw Spectra from Trains
     string rootfilename;
     if (R == 2)   rootfilename = "AnalysisResults8144.root";
+    //if (R == 4)   rootfilename = "AnalysisResults8294.root";
     if (R == 4)   rootfilename = "AnalysisResults8119.root";
+    //if (R == 4)   rootfilename = "AnalysisResults8316.root";
     const char *lerootfile = rootfilename.c_str(); 
 
     //Load File/Tree into system
@@ -218,8 +192,9 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
         long int percentileticker = 0;                                   //number of entries, starting from lowest q2 and counting upward
         int percentilen = 1;                                             //number percentile we're on
         //update centrality
-        leftc = (int)centl + j;
-        rightc = (int)centl + j + 1;
+        leftc = (int)centl + j; 
+        rightc = (int)centl + j + 1;    
+        cout << "Cent: " << leftc <<"\n";
         q2hist2D->GetXaxis()->SetRangeUser(leftc, rightc);
         //project slice onto q2 axis
         TH1F *q2hist = (TH1F*)q2hist2D->ProjectionY();
@@ -238,11 +213,12 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
             break;}             
         }
       }
-      //calculate percentiles in V0A
+      //calculate percentiles in 2nd detector
       vector<long double> percentilesA(0);                              //vector that stores 10th, 20th etc percentile per cent bin
       vector<vector<long double>>  allPercentA(0);                      //vector that stores percentiles vectors for all centralities
       //get percentiles in bins of 1% centrality
       for (int j = 0; j < centdiff; j++) {
+        //reset percentile ticker
         long int percentileticker = 0;                                   //number of entries, starting from lowest q2 and counting upward
         int percentilen = 1;                                             //number percentile we're on
         leftc = (int)centl + j; 
@@ -263,35 +239,52 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
             break;}             
         }
       }
+  TH1D *perc20 = new TH1D("perc20", "perc20", centdiff, centl, centr);
+  TH1D *perc20C = new TH1D("perc20C", "perc20C", centdiff, centl, centr);
+  TH1D *perc80 = new TH1D("perc80", "perc80", centdiff, centl, centr);
+  TH1D *perc80C = new TH1D("perc8C0", "perc80C", centdiff, centl, centr);
+  for (int i = 1; i <= centdiff; i++) {
+      perc20->SetBinContent(i, allPercentA[i-1][3]);
+      perc20C->SetBinContent(i, allPercent[i-1][6]);
+      perc80->SetBinContent(i, allPercentA[i-1][6]);
+      perc80C->SetBinContent(i, allPercent[i-1][6]);
+  }
+  perc20->SetLineColor(kRed);
+    perc20->SetLineWidth(2);
+  perc20C->SetLineColor(kRed);
+    perc20C->SetLineWidth(2);
+  perc80->SetLineColor(kRed);
+    perc80->SetLineWidth(2);
+  perc80C->SetLineColor(kRed);
+    perc80C->SetLineWidth(2);
 
 
-
-    //Determine Extractor Bin Scaling (necessary if using trees)
+    //Determine Extractor Bin Scaling
     const int extraBins = 9;
     double extraFrac[extraBins] = {0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
     double extraEdge[extraBins + 1] = {-20.0, 10.0, 20.0, 30.0, 40.0, 60.0, 80.0, 100.0, 140.0, 200.0};
     
+    //set branch names
+    stringstream Tq2Det, TepDet;
+    Tq2Det << "Event_Q2Vector" << q2Det;
+    TepDet << "Jet_EPangle" << epDet;
+
     //Retrieve Tree and Populate Response
     TTree *T = nullptr;
     if (R == 2) lefile->GetObject("JetTree_AliAnalysisTaskJetExtractor_Jet_AKTChargedR020_tracks_pT0150_pt_scheme_Rho_Jet", T);
     if (R == 4) lefile->GetObject("JetTree_AliAnalysisTaskJetExtractor_Jet_AKTChargedR040_tracks_pT0150_pt_scheme_Rho_Jet", T);
-    float jetpT, centra, qvec, qchec, ep;
+    float jetpT, centra, qvec, ep;
     T->SetBranchAddress("Jet_Pt", &jetpT);
     T->SetBranchAddress("Event_Centrality", &centra);
-    T->SetBranchAddress("Event_Q2VectorV0C", &qvec);
-    T->SetBranchAddress("Jet_EPangleV0A", &ep);
+    T->SetBranchAddress(Tq2Det.str().c_str(), &qvec);    
+    T->SetBranchAddress(TepDet.str().c_str(), &ep);    
     int entries = T->GetEntries();
     for (int i = 0; i < entries; i++)   {
        T->GetEntry(i);     
        if (centra < centl || centra > centr)                                    continue;       
        if (jetpT < truncation || jetpT > 120.0)                                 continue;
-       if (ese == 0)           {                                                       //20th percentile
-          if (qvec > allPercent[int(centra-centl)][2])           continue;
-
-             }
-       if (ese == 1)           {
-          if (qvec < allPercent[int(centra-centl)][6])    continue;
-          }  //80th percentile
+       if (ese == 0)           {if (qvec > allPercent[int(centra-centl)][2])    continue;}  //20th percentile
+       if (ese == 1)           {if (qvec < allPercent[int(centra-centl)][6])    continue;}  //80th percentile
        if (ese == 3)          
            {if (qvec < allPercent[int(centra-centl)][0])    continue;  //80th percentile
            if (qvec > allPercent[int(centra-centl)][3])    continue;}  //80th percentile
@@ -319,6 +312,7 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
 
  
    //h1smeared->Sumw2();
+  
 
 
   //==================================================================================
@@ -336,7 +330,7 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
    //RooUnfoldResponse responsefull;
    //responsefull.Setup(h1rawfull, h1truefull);
   
-    //loop through pThard files
+
     while(infile2 >> filename2){
       int pthardbin=0;
       cout << "Filename: " << filename2 <<"\n";
@@ -367,6 +361,12 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
     int nEv=mc->GetEntries(); 
     cout << "Tree Obtained\n";
 
+    //set branch names
+    stringstream MCq2Det, MCepDet, MCepDetMatch;
+    MCq2Det << "Event_Q2Vector" << q2Det;
+    MCepDet << "Jet_EPangle" << epDet;
+    MCepDetMatch << "Jet_MC_MatchedPartLevelJet_EPangle" << epDet;
+
     // set the branches of the mc tree
     mc->SetBranchAddress("Jet_Pt", &ptJet); 
     mc->SetBranchAddress("Jet_Eta", &eta);
@@ -374,9 +374,9 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
     mc->SetBranchAddress("Jet_MC_MatchedDetLevelJet_Pt", &ptdet);
     mc->SetBranchAddress("Event_Centrality", &centrality);
     mc->SetBranchAddress("Jet_Area", &area);
-    mc->SetBranchAddress("Event_Q2VectorV0C", &q2);
-    mc->SetBranchAddress("Jet_EPangleV0A", &epangle);
-    mc->SetBranchAddress("Jet_MC_MatchedPartLevelJet_EPangleV0A", &epPar);
+    mc->SetBranchAddress(MCq2Det.str().c_str(), &q2);
+    mc->SetBranchAddress(MCepDet.str().c_str(), &epangle);
+    mc->SetBranchAddress(MCepDetMatch.str().c_str(), &epPar);
     
   
   int countm=0;
@@ -395,20 +395,8 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
       else if(ptJet >= 100. && ptJet < 140.)   EBscale = 1.0/0.15;
       else if(ptJet >= 140. && ptJet < 200.)   EBscale = 1.0/0.05;
       scalefactor*=EBscale;
-      double weight = 1.0;
-
-      //reweight spectrum using parameters obtained previously
-      if (ese == 0)  weight *= pTlo1 + ptPar*pTlo2 + ptPar*ptPar*pTlo3;     //lowq2
-      if (ese == 0)  weight *= eplo1 + epPar*eplo2 + epPar*epPar*eplo3; 
-      if (ese == 1)  weight *= pThi1 + ptPar*pThi2 + ptPar*ptPar*pThi3;     //highq2
-      if (ese == 1)  weight *= ephi1 + epPar*ephi2 + epPar*epPar*ephi3;
-      if (ese == 2)  weight *= pTin1 + ptPar*pTin2 + ptPar*ptPar*pTin3;     //inclusive
-      if (ese == 2)  weight *= epin1 + epPar*epin2 + epPar*epPar*epin3;     //inclusive
-      if (ese == 3)  weight *= pTin1 + ptPar*pTin2 + ptPar*ptPar*pTin3;     //inclusive
-      if (ese == 3)  weight *= epin1 + epPar*epin2 + epPar*epPar*epin3;     //inclusive
-      scalefactor*=weight;
       // *********
-  
+
       if (centrality < centl || centrality > centr)  continue;
       if (epcut == 0)    {if (abs(cos(epangle)) > sqrt(2)/2.0) continue;}  //out-plane
       if (epcut == 1)    {if (abs(cos(epangle)) < sqrt(2)/2.0) continue;}  //in-plane
@@ -426,6 +414,10 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
       
       hKinPre->Fill(ptPar, scalefactor);
       h2KinPre->Fill(ptPar, abs(cos(epPar)), scalefactor);
+      if (ptJet < truncation && ptPar > 50.0)  {
+          if (pthardbin-1 <= 5)  {
+          cout << "BUMP ALERT\n";
+          }} 
       if (ptJet < truncation || ptJet > 120) continue;
       hKinPos->Fill(ptPar, scalefactor);
       h2KinPos->Fill(ptPar, abs(cos(epPar)), scalefactor);
@@ -435,7 +427,7 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
 	  h2true->Fill(ptPar, abs(cos(epPar)), scalefactor);
 	  h1raw->Fill(ptJet, scalefactor);
 	  h2raw->Fill(ptJet, abs(cos(epangle)), scalefactor);
-      h1rawep->Fill(abs(cos(epangle)), scalefactor);
+          h1rawep->Fill(abs(cos(epangle)), scalefactor);
 	  response1D.Fill(ptJet, ptPar, scalefactor);
 	  response2D.Fill(ptJet, abs(cos(epangle)), ptPar, abs(cos(epPar)), scalefactor);
     }}
@@ -453,22 +445,22 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
   //==================================================================================
 
     stringstream ww;
-    if (ese == 0)  ww << "UnfoldingData_2D_non_R0" << R << "_qV0C_epV0A_" << Form("%.0f", centl) << Form("%.0f", centr) 
-                      << "_lo30_rewe_" << truncation << "_Dec1.root";
-    if (ese == 1)  ww << "UnfoldingData_2D_non_R0" << R << "_qV0C_epV0A_" << Form("%.0f", centl) << Form("%.0f", centr) 
-                      << "_hi30_rewe_" << truncation << "_Dec1.root";
-    if (ese == 2)  ww << "UnfoldingData_2D_non_R0" << R << "_qV0C_epV0A_" << Form("%.0f", centl) << Form("%.0f", centr) 
-                      << "_allq_rewe_" << truncation << "_Dec1.root";
-    if (ese == 3)  ww << "UnfoldingData_2D_non_R0" << R << "_qV0C_epV0A_" << Form("%.0f", centl) << Form("%.0f", centr) 
-                      << "_1040_rewe_" << truncation << "_Dec1.root";
+    if (ese == 0)  ww << "UnfoldingData_2D_non_R0" << R << "_q" << q2Det << "_ep" << epDet << "_" 
+                      << Form("%.0f", centl) << Form("%.0f", centr) << "_lo30_" << Form("%.0f", truncation) << "_Dec1.root"; 
+    if (ese == 1)  ww << "UnfoldingData_2D_non_R0" << R << "_q" << q2Det << "_ep" << epDet << "_" 
+                      << Form("%.0f", centl) << Form("%.0f", centr) << "_hi30_" << Form("%.0f", truncation) << "_Dec1.root"; 
+    if (ese == 2)  ww << "UnfoldingData_2D_non_R0" << R << "_q" << q2Det << "_ep" << epDet << "_"
+                      << Form("%.0f", centl) << Form("%.0f", centr) << "_allq_" << Form("%.0f", truncation) << "_Dec1.root"; 
+    if (ese == 3)  ww << "UnfoldingData_2D_non_R0" << R << "_q" << q2Det << "_ep" << epDet << "_" 
+                      << Form("%.0f", centl) << Form("%.0f", centr) << "_1040_" << Form("%.0f", truncation) << "_Dec1.root"; 
     TFile *fout=new TFile (ww.str().c_str(),"RECREATE");
     fout->cd();
     h1raw->SetName("raw");
+    h1raw->Write();
     h2raw->SetName("raw2");
     h2raw->Write();
     h1rawep->SetName("rawep1");
     h1rawep->Write();
-    h1raw->Write();
     h1true->SetName("true1");
     h1true->Write();
     h2true->SetName("true2");
@@ -516,93 +508,50 @@ void RooRewe_ese2D(double centl, double centr, int ese, int R = 4, int epcut = 2
 	  
     }
 	  
-}   //main function complete
 
+  //==================================================================================
+  //========================== Draw QA Plots =========================================   
+  //==================================================================================
+  TCanvas *c1 = new TCanvas("Q2 vs Cent", "Q2 vs Cent", 500, 500);
+  c1->cd();
+       gStyle->SetOptStat(0);
+       //gStyle->SetPadTickX(1);
+       //gStyle->SetPadTickY(1);
+       TPad *pad1 = new TPad("pad1", "", 0.0, 0.05, 1.0, 1.0);
+          pad1->SetBottomMargin(0.15); // Upper and lower plot are joined
+          pad1->SetLeftMargin(0.15); // Upper and lower plot are joined
+          pad1->SetRightMargin(0.15);
+          pad1->Draw();
+          pad1->cd();
+          //pad1->SetLogz();
+       qAhist2D->GetXaxis()->SetRangeUser(centl, centr);
+       qAhist2D->GetXaxis()->SetTitle("Centrality (%)");
+       qAhist2D->GetYaxis()->SetTitle("q_{2}^{V01}");
+       qAhist2D->Draw("same colz");
+       perc20->Draw("same");
+       perc80->Draw("same");
 
+  TCanvas *c2 = new TCanvas("Q2 vs CentC", "Q2 vs CentC", 500, 500);
+  c2->cd();
+       gStyle->SetOptStat(0);
+       //gStyle->SetPadTickX(1);
+       //gStyle->SetPadTickY(1);
+       TPad *pad2 = new TPad("pad2", "", 0.0, 0.05, 1.0, 1.0);
+          pad2->SetBottomMargin(0.15); // Upper and lower plot are joined
+          pad2->SetLeftMargin(0.15); // Upper and lower plot are joined
+          pad2->SetRightMargin(0.15);
+          pad2->Draw();
+          pad2->cd();
+          //pad1->SetLogz();
+       q2hist2D->GetXaxis()->SetRangeUser(centl, centr);
+       q2hist2D->GetXaxis()->SetTitle("Centrality (%)");
+       q2hist2D->GetYaxis()->SetTitle("q_{2}^{V02}");
+       q2hist2D->Draw("same colz");
+       perc20C->Draw("same");
+       perc80C->Draw("same");
 
-
-  //================================================================================================================
-  //==========================   Function for Calculating Reweighting Parameters ===================================   
-  //================================================================================================================
-
-//Calculate Reweighting Parameters
-
-void calcReweightingParams(string rootfile, bool pT = true, int jetR = 2)  {
-  
-  bool ep = false;
-  if (pT == false)   ep = true;
-
-  double trunc;
-  if (jetR == 2) trunc = 20.0;
-  if (jetR == 4) trunc = 30.0;
-
-  gStyle->SetOptStat(0);
-  gStyle->SetOptTitle(0);
-  //nominal file
-
-  TFile* inFile = TFile::Open(rootfile.c_str());
-  cout << "FileName: " << rootfile <<"\n";
-
-  //get hist
-  TH1D* data;
-      if (pT == true)   data = (TH1D*)inFile->Get("specraw1");
-      if (ep == true)   data = (TH1D*)inFile->Get("specrawep1");
-  data->SetName("data");
-  data->SetMarkerColor(kBlack);
-  data->SetMarkerStyle(20);
-  data->SetLineColor(kBlack);
-  TH1D* mc;
-      if (pT == true) mc = (TH1D*)inFile->Get("raw");
-      if (ep == true) mc =(TH1D*)inFile->Get("rawep1");
-  mc->SetName("mc");
-  mc->SetMarkerColor(kRed);
-  mc->SetMarkerStyle(20);
-  mc->SetLineColor(kRed);
-  //data->Rebin(5);
-  //mc->Rebin(5);
-  int bin1, bin2;
-  if (pT == true)  {
-      bin1 = data->GetXaxis()->FindBin(trunc);
-      bin2 = data->GetXaxis()->FindBin(120.);}
-  if (ep == true)  {
-      bin1 = data->GetYaxis()->FindBin(0.01);
-      bin2 = data->GetYaxis()->FindBin(0.99);}
-  data->Scale(1./data->Integral(bin1, bin2));
-  mc->Scale(1./mc->Integral(bin1, bin2));
-  data->Divide(mc);
-
-  //fit polynomial
-  TF1* linFit;
-     if (ep == true) {
-         linFit = new TF1("linFit", "pol2", 0,1);
-         linFit->SetRange(0.0, 1.0);}
-     if (pT == true) {
-         linFit = new TF1("linFit", "pol2", trunc, 120);
-         linFit->SetRange(trunc, 120);}
-  //linFit->SetParameters(0.5, 0.5, 0.9);
-  TLine *line;
-    if (pT == true) line = new TLine(trunc, 1, 120, 1);
-    if (ep == true) line = new TLine(0, 1, 1, 1);
-  line->SetLineStyle(2);
-  //linFit->SetRange(50, 80);
-  data->Fit(linFit, "N R I", "");
-  if (pT == true)  data->GetXaxis()->SetRangeUser(trunc, 120.);
-  if (ep == true)  data->GetXaxis()->SetRangeUser(0.0, 1.0);
-  data->GetYaxis()->SetRangeUser(0., 2.);
-  if (ep == true)  data->SetXTitle("cos(#Delta#varphi)");
-  if (pT == true)  data->SetXTitle("#it{p}_{T} (GeV/#it{c})");
-  data->SetYTitle("Data/MC");
-  data->Draw();
-  linFit->Draw("same");
-  line->Draw("same");
-
-  p0 = linFit->GetParameter(0);
-  p1 = linFit->GetParameter(1);
-  p2 = linFit->GetParameter(2);
-  
 
 }
-
 #ifndef __CINT__
 //int main () { RooSimplepTPbPb_data_Caitie(); return 0; }  // Main program when run stand-alone
 #endif
