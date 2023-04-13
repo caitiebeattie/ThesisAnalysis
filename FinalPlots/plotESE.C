@@ -9,6 +9,7 @@ int R = 2;
 
 void plotESE() {
 
+
   //set custom colors
   int kLilac, kLightPink, kOcean, kFuschia, kCaitiePink, kCaitieLightPink, kCaitieBlue, kCaitieDarkBlue, kSunPurple, kSunBlue, kSunOrange, kSunPink;
       kOcean = TColor::GetColor("#240e8f");   
@@ -28,6 +29,13 @@ void plotESE() {
   TH1D *spacer1 = new TH1D("spacer1", "spacer1", 10, 30, 120);
   TH1D *spacer2 = new TH1D("spacer2", "spacer2", 10, 30, 120);
   TH1D *spacer3 = new TH1D("spacer3", "spacer3", 10, 30, 120);
+
+
+
+
+ //--------------------------------------------------------------------------------------------
+ //------------------------ Get Results from Root Files ---------------------------------------
+ //--------------------------------------------------------------------------------------------
 
   //q2-large/q2-small plots
   TFile *file1 = new TFile("ESEplots_R04_Dec1.root");
@@ -112,9 +120,12 @@ void plotESE() {
     setAsymmErrorColor(systR04_hiout, kSunOrange, kSunOrange, 0.4);
     setAsymmErrorColor(systR04_hiin, kCaitieDarkBlue, kCaitieBlue, 0.3);
 
-//------------------------------------------------------------------------------
 
-  //Legends
+
+ //--------------------------------------------------------------------------------------------
+ //------------------------ Generate Legends --------------------------------------------------
+ //--------------------------------------------------------------------------------------------
+
   auto gen = new TLegend(0.2, 0.725, 0.3, 0.9);
         gen->SetTextSize(0.04);
         gen->SetBorderSize(0);
@@ -161,7 +172,7 @@ void plotESE() {
         gen5->SetBorderSize(0);
         gen5->SetFillColorAlpha(kWhite, 0.0);
         gen5->AddEntry((TObject*)0, "ALICE", "");
-        gen5->AddEntry((TObject*)0, "30#font[122]{-}50 Pb#font[122]{-}Pb, #sqrt{#it{s}_{NN}} = 5.02 TeV", "");
+        gen5->AddEntry((TObject*)0, "30#font[122]{-}50\% Pb#font[122]{-}Pb, #sqrt{#it{s}_{NN}} = 5.02 TeV", "");
         gen5->AddEntry((TObject*)0, "Charged-particle jets, anti-#it{k}_{T}, #it{R} = 0.2", "");
         gen5->AddEntry((TObject*)0, "#it{p}_{T}^{lead track} > 5 GeV/#it{c}, |#it{#eta}_{jet}| < 0.7", "");
    auto gen6 = new TLegend(0.3, 0.7, 0.8, 0.9);
@@ -169,14 +180,16 @@ void plotESE() {
         gen6->SetBorderSize(0);
         gen6->SetFillColorAlpha(kWhite, 0.0);
         gen6->AddEntry((TObject*)0, "ALICE", "");
-        gen6->AddEntry((TObject*)0, "30#font[122]{-}50 Pb#font[122]{-}Pb, #sqrt{#it{s}_{NN}} = 5.02 TeV", "");
+        gen6->AddEntry((TObject*)0, "30#font[122]{-}50\% Pb#font[122]{-}Pb, #sqrt{#it{s}_{NN}} = 5.02 TeV", "");
         gen6->AddEntry((TObject*)0, "Charged-particle jets, anti-#it{k}_{T}, #it{R} = 0.4", "");
         gen6->AddEntry((TObject*)0, "#it{p}_{T}^{lead track} > 5 GeV/#it{c}, |#it{#eta}_{jet}| < 0.5", "");
 
 
 
-//--------------------------------------------------------------------------------------
 
+ //--------------------------------------------------------------------------------------------
+ //------------------------ Draw Results ------------------------------------------------------
+ //--------------------------------------------------------------------------------------------
 
 
 
@@ -196,8 +209,8 @@ void plotESE() {
           pad1->Draw();
           pad1->cd();               // pad1 becomes the current pad   
           spacer1->SetTitle("");
-          spacer1->SetXTitle("#it{p}_{T, jet} (GeV/#it{c})");
-          spacer1->SetYTitle("#frac{d^{2}#it{N}}{d#it{p}_{T, jet}d#it{#eta}_{jet}}#cbar_{#it{q}_{2}-large} / #frac{d^{2}#it{N}}{d#it{p}_{T, jet}d#it{#eta}_{jet}}#cbar_{#it{q}_{2}-small}");
+          spacer1->SetXTitle("#it{p}_{T, ch jet} (GeV/#it{c})");
+          spacer1->SetYTitle("#frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}}#cbar_{#it{q}_{2}-large} / #frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}}#cbar_{#it{q}_{2}-small}");
           spacer1->GetXaxis()->SetTitleSize(0.05);
           spacer1->GetXaxis()->SetTitleOffset(1.2);
           spacer1->GetYaxis()->SetTitleSize(0.05);
@@ -218,17 +231,14 @@ void plotESE() {
      /*
        cout << "\nR = 0.2 Values\n";
        for (int i = 1; i <= yieldratio2->GetNbinsX(); i++) {
-           cout << "Bin " << yieldratio2->GetBinLowEdge(i) << "-" << yieldratio2->GetBinLowEdge(i+1) << ": " << yieldratio2->GetBinContent(i) <<"\n";
-       }
+           cout << "Bin " << yieldratio2->GetBinLowEdge(i) << "-" << yieldratio2->GetBinLowEdge(i+1) << ": " << yieldratio2->GetBinContent(i) <<"\n";}
        cout << "R = 0.2 Stat Errors\n";
        for (int i = 1; i <= yieldratio2->GetNbinsX(); i++) {
            cout << "Bin " << yieldratio2->GetBinLowEdge(i) << "-" << yieldratio2->GetBinLowEdge(i+1) << ": " << yieldratio2->GetBinError(i) <<"\n";
            cout << "	" << 100*yieldratio2->GetBinError(i)/yieldratio2->GetBinContent(i) <<"\n";}
-
        cout << "R = 0.4\n";
        for (int i = 1; i <= yieldratio1->GetNbinsX(); i++) {
-           cout << "Bin " << yieldratio1->GetBinLowEdge(i) << "-" << yieldratio1->GetBinLowEdge(i+1) << ": " << yieldratio1->GetBinContent(i) <<"\n";
-       }
+           cout << "Bin " << yieldratio1->GetBinLowEdge(i) << "-" << yieldratio1->GetBinLowEdge(i+1) << ": " << yieldratio1->GetBinContent(i) <<"\n";}
        cout << "R = 0.4 Stat Errors\n";
        for (int i = 1; i <= yieldratio1->GetNbinsX(); i++) {
            cout << "Bin " << yieldratio1->GetBinLowEdge(i) << "-" << yieldratio1->GetBinLowEdge(i+1) << ": " << yieldratio1->GetBinError(i) <<"\n";
@@ -236,7 +246,7 @@ void plotESE() {
      */
      
 
-  TCanvas *c2 = new TCanvas("Plot 2", "Plot 2", 800, 600);
+  TCanvas *c2 = new TCanvas("Plot2", "Plot2", 800, 600);
   c2->cd();
        gStyle->SetOptStat(0);
        gStyle->SetPadTickX(1);
@@ -253,7 +263,7 @@ void plotESE() {
              spacer2->SetTitle("");
              spacer2->SetMinimum(0.01);
              spacer2->SetMaximum(1.99);
-             spacer2->SetXTitle("#it{p}_{T, jet} (GeV/#it{c})");
+             spacer2->SetXTitle("#it{p}_{T, ch jet} (GeV/#it{c})");
              spacer2->GetXaxis()->SetTitleSize(0.05);
              spacer2->GetXaxis()->SetLabelSize(0.045);
              spacer2->GetXaxis()->SetTitleOffset(1.3);
@@ -261,7 +271,7 @@ void plotESE() {
              spacer2->GetYaxis()->SetLabelSize(0.045);
              spacer2->GetYaxis()->SetTitleOffset(1.2);
              spacer2->GetXaxis()->SetRangeUser(35.0, 120.0);
-             spacer2->SetYTitle("#frac{d^{2}#it{N}}{d#it{p}_{T, jet}d#it{#eta}_{jet}}#cbar_{out-of-plane} / #frac{d^{2}#it{N}}{d#it{p}_{T, jet}d#it{#eta}_{jet}}#cbar_{in-plane}");
+             spacer2->SetYTitle("#frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}}#cbar_{out-of-plane} / #frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}}#cbar_{in-plane}");
          spacer2->Draw("same");
          //ratioOILow->GetXaxis()->SetRangeUser(ratioOILow->GetBinLowEdge(startbin), 100.0);
          //ratioHi1->GetXaxis()->SetRangeUser(ratioHi1->GetBinLowEdge(startbin), 120.0);
@@ -277,7 +287,7 @@ void plotESE() {
    datadetails->Draw("same");
    line->Draw("same");
 
-  TCanvas *c3 = new TCanvas("Plot 3", "Plot 3", 800, 600);
+  TCanvas *c3 = new TCanvas("Plot3", "Plot3", 800, 600);
   c3->cd();
        gStyle->SetOptStat(0);
        gStyle->SetPadTickX(1);
@@ -307,7 +317,7 @@ void plotESE() {
    line->Draw("same");
 
 
-  TCanvas *c4 = new TCanvas("Plot 4", "Plot 4", 600, 700);
+  TCanvas *c4 = new TCanvas("Plot4", "Plot4", 600, 700);
   c4->cd();
   TPad *pad4 = new TPad("pad4", "", 0.0, 0.05, 1.0, 1.0);
         pad4->SetBottomMargin(0.1); // Upper and lower plot are joined
@@ -320,9 +330,9 @@ void plotESE() {
        spacer3->GetXaxis()->SetTitleSize(0.04);
        spacer3->GetXaxis()->SetRangeUser(35.0, 120.0);
        spacer3->SetTitle("");
-       spacer3->SetXTitle("#it{p}_{T, jet} (GeV/#it{c})");
+       spacer3->SetXTitle("#it{p}_{T, ch jet} (GeV/#it{c})");
        spacer3->GetXaxis()->SetTitleOffset(1.2);
-       spacer3->SetYTitle("#frac{1}{#it{N}_{event}} #frac{d^{2}#it{N}}{d#it{p}_{T, jet}d#it{#eta}_{jet}}");
+       spacer3->SetYTitle("#frac{1}{#it{N}_{event}} #frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}}");
        spacer3->GetYaxis()->SetTitleOffset(2.1);
        spacer3->SetMaximum(2*pow(10,-4));
        spacer3->SetMinimum(8*pow(10,-8));
@@ -351,9 +361,9 @@ void plotESE() {
        spacer3->GetXaxis()->SetTitleSize(0.04);
        spacer3->GetXaxis()->SetRangeUser(35.0, 120.0);
        spacer3->SetTitle("");
-       spacer3->SetXTitle("#it{p}_{T, jet} (GeV/#it{c})");
+       spacer3->SetXTitle("#it{p}_{T, ch jet} (GeV/#it{c})");
        spacer3->GetXaxis()->SetTitleOffset(1.2);
-       spacer3->SetYTitle("#frac{1}{#it{N}_{event}} #frac{d^{2}#it{N}}{d#it{p}_{T, jet}d#it{#eta}_{jet}}");
+       spacer3->SetYTitle("#frac{1}{#it{N}_{event}} #frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}}");
        spacer3->GetYaxis()->SetTitleOffset(2.1);
        spacer3->SetMaximum(2*pow(10,-4));
        spacer3->SetMinimum(8*pow(10,-8));
@@ -369,6 +379,18 @@ void plotESE() {
    yieldLeg->Draw("same");
    gen6->Draw("same");
 }
+
+
+
+
+
+
+
+
+
+//------------------------------------------------------------------------------------------------------------
+
+
 
 
 void setColor(TH1F* h, int kcolor, int kMarkerShape = 20) {
