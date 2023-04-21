@@ -413,8 +413,9 @@ void v2check (int iteration, string filename, int planestatus = 0) {
   
 
   //reproduce paper figure
-  double newR2 = 0.77;
-  //double newR2 = 1.0;
+  double newR2 = 0.61;   // use if using V0A for EP angle
+  //double newR2 = 0.77; // use if using V0M for EP angle
+  //double newR2 = 1.0;  // only use for testing purposes
   TH1D *paperFig = new TH1D("paperFig", "paperFig", binning.size()-1, binning.data());
   TH1D *myv2 = new TH1D("myv2", "myv2", pTedgerebin.size()-1, pTedgerebin.data());
   vector<double> vecMyv2(0);
