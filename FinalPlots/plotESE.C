@@ -38,7 +38,7 @@ void plotESE() {
  //--------------------------------------------------------------------------------------------
 
   //q2-large/q2-small plots
-  TFile *file1 = new TFile("ESEplots_R04_Dec1.root");
+  TFile *file1 = new TFile("ESEplots_R04_May15_check.root");
   TH1D *yieldratio1 = (TH1D*)file1->Get("yieldratio"); 
   TGraphErrors *syst1 = (TGraphErrors*)file1->Get("systematics"); 
     yieldratio1->SetLineColor(kFuschia);
@@ -49,7 +49,7 @@ void plotESE() {
     syst1->SetMarkerStyle(21);
     syst1->SetFillColorAlpha(kFuschia, 0.2);
 
-  TFile *file2 = new TFile("ESEplots_R02_Dec1.root");
+  TFile *file2 = new TFile("ESEplots_R02_May15_check.root");
   TH1D *yieldratio2 = (TH1D*)file2->Get("yieldratio"); 
   TGraphErrors *syst2 = (TGraphErrors*)file2->Get("systematics"); 
     yieldratio2->SetLineColor(kOcean);
@@ -61,7 +61,8 @@ void plotESE() {
 
 
   //out-of-plane/in-plane plots
-  TFile *file3 = new TFile("ESEEPplots_R02_Dec1.root");
+  TFile *file3 = new TFile("ESEEPplots_R02_May15.root");
+  //TFile *file3 = new TFile("ESEEPplots_R02_Jaime.root");
   TH1F *ratioLo1 = (TH1F*)file3->Get("ratioOILow"); 
   TH1F *ratioHi1 = (TH1F*)file3->Get("ratioOIHigh"); 
   TGraphErrors *systLo1 = (TGraphErrors*)file3->Get("systematicsLo"); 
@@ -72,7 +73,7 @@ void plotESE() {
     setErrorColor(systHi1, kCaitieDarkBlue, kCaitieBlue, 0.3, 21);
 
 
-  TFile *file4 = new TFile("ESEEPplots_R04_Dec1.root");
+  TFile *file4 = new TFile("ESEEPplots_R04_May15.root");
   TH1F *ratioLo2 = (TH1F*)file4->Get("ratioOILow"); 
   TH1F *ratioHi2 = (TH1F*)file4->Get("ratioOIHigh"); 
   TGraphErrors *systLo2 = (TGraphErrors*)file4->Get("systematicsLo"); 
@@ -84,7 +85,7 @@ void plotESE() {
 
 
   //spectra plots
-  TFile *file5 = new TFile("spectraplots_R02_Dec1.root");
+  TFile *file5 = new TFile("spectraplots_R02_May15.root");
   TH1F* spectraR02_loin = (TH1F*)file5->Get("yieldLowInPlane");
   TH1F* spectraR02_loout = (TH1F*)file5->Get("yieldLowOutPlane");
   TH1F* spectraR02_hiin = (TH1F*)file5->Get("yieldHighInPlane");
@@ -102,7 +103,7 @@ void plotESE() {
     setAsymmErrorColor(systR02_hiout, kSunOrange, kSunOrange, 0.4);
     setAsymmErrorColor(systR02_hiin, kCaitieDarkBlue, kCaitieBlue, 0.3);
 
-  TFile *file6 = new TFile("spectraplots_R04_Dec1.root");
+  TFile *file6 = new TFile("spectraplots_R04_May15.root");
   TH1F* spectraR04_loin = (TH1F*)file6->Get("yieldLowInPlane");
   TH1F* spectraR04_loout = (TH1F*)file6->Get("yieldLowOutPlane");
   TH1F* spectraR04_hiin = (TH1F*)file6->Get("yieldHighInPlane");
@@ -126,63 +127,66 @@ void plotESE() {
  //------------------------ Generate Legends --------------------------------------------------
  //--------------------------------------------------------------------------------------------
 
-  auto gen = new TLegend(0.2, 0.725, 0.3, 0.9);
-        gen->SetTextSize(0.04);
+  auto gen = new TLegend(0.15, 0.725, 0.3, 0.9);
+        gen->SetTextSize(0.05);
         gen->SetBorderSize(0);
         gen->SetFillColorAlpha(kWhite, 0.0);
         gen->AddEntry((TObject*)0, "ALICE, 30#font[122]{-}50% Pb#font[122]{-}Pb, #sqrt{#it{s}_{NN}} = 5.02 TeV", "");
         gen->AddEntry((TObject*)0, "Charged-particle jets, anti-#it{k}_{T}", "");
-        gen->AddEntry((TObject*)0, "#it{p}_{T}^{lead track} > 5 GeV/#it{c}, |#it{#eta}_{jet}| < 0.9-#it{R}", "");
-   auto gen2 = new TLegend(0.175, 0.65, 0.3, 0.9);
-        gen2->SetTextSize(0.045);
+        gen->AddEntry((TObject*)0, "#it{p}_{T}^{lead track} > 5 GeV/#it{c}, |#it{#eta}_{jet}| < 0.9 #font[122]{-} #it{R}", "");
+   auto gen2 = new TLegend(0.175, 0.6, 0.3, 0.9);
+        gen2->SetTextSize(0.0475);
         gen2->SetBorderSize(0);
         gen2->SetFillColorAlpha(kWhite, 0.0);
         gen2->AddEntry((TObject*)0, "ALICE", "");
         gen2->AddEntry((TObject*)0, Form("%.0d#font[122]{-}%.0d%% Pb#font[122]{-}Pb, #sqrt{#it{s}_{NN}} = 5.02 TeV", centl, centr), "");
         gen2->AddEntry((TObject*)0, Form("Charged-particle jets, anti-#it{k}_{T}, #it{R} = 0.%.0d", 2), "");
-        gen2->AddEntry((TObject*)0, Form("#it{p}_{T}^{lead track} > 5 GeV/#it{c}, |#it{#eta}_{jet}| < 0.%.0d", 7), "");
-   auto gen4 = new TLegend(0.175, 0.65, 0.3, 0.9);
-        gen4->SetTextSize(0.045);
+        gen2->AddEntry((TObject*)0, "#it{p}_{T}^{lead track} > 5 GeV/#it{c}, |#it{#eta}_{jet}| < 0.9 #font[122]{-} #it{R}", "");
+   auto gen4 = new TLegend(0.175, 0.6, 0.3, 0.9);
+        gen4->SetTextSize(0.0475);
         gen4->SetBorderSize(0);
         gen4->SetFillColorAlpha(kWhite, 0.0);
         gen4->AddEntry((TObject*)0, "ALICE", "");
         gen4->AddEntry((TObject*)0, Form("%.0d#font[122]{-}%.0d%% Pb#font[122]{-}Pb, #sqrt{#it{s}_{NN}} = 5.02 TeV", centl, centr), "");
         gen4->AddEntry((TObject*)0, Form("Charged-particle jets, anti-#it{k}_{T}, #it{R} = 0.%.0d", 4), "");
-        gen4->AddEntry((TObject*)0, Form("#it{p}_{T}^{lead track} > 5 GeV/#it{c}, |#it{#eta}_{jet}| < 0.%.0d", 5), "");
+        gen4->AddEntry((TObject*)0, "#it{p}_{T}^{lead track} > 5 GeV/#it{c}, |#it{#eta}_{jet}| < 0.9 #font[122]{-} #it{R}", "");
   auto key = new TLegend(0.55, 0.25, 0.8, 0.4);
-       key->SetTextSize(0.045);
+       key->SetTextSize(0.05);
        key->SetBorderSize(0);
        key->SetFillColorAlpha(kWhite, 0.0);
        key->AddEntry(syst2, "#it{R} = 0.2", "plf");
        key->AddEntry(syst1, "#it{R} = 0.4", "plf");
-   auto datadetails = new TLegend(0.725, 0.725, 0.9, 0.875);
-        datadetails->SetTextSize(0.04);
+   auto datadetails = new TLegend(0.725, 0.7, 0.9, 0.875);
+        datadetails->SetTextSize(0.0475);
         datadetails->SetBorderSize(0);
         datadetails->AddEntry(systHi1, "#it{q}_{2}-large", "plf");
         datadetails->AddEntry(systLo1, "#it{q}_{2}-small", "plf");
-   auto yieldLeg = new TLegend(0.25, 0.15, 0.45, 0.35);
-        yieldLeg->SetTextSize(0.03);
+   auto yieldLeg = new TLegend(0.275, 0.15, 0.475, 0.35);
+        yieldLeg->SetTextSize(0.0425);
         yieldLeg->SetBorderSize(0);
+        yieldLeg->SetFillColorAlpha(kWhite, 0.0);
         yieldLeg->AddEntry(spectraR02_hiin, "#it{q}_{2}-large, in-plane", "plf");
         yieldLeg->AddEntry(spectraR02_hiout, "#it{q}_{2}-large, out-of-plane", "plf");
         yieldLeg->AddEntry(spectraR02_loin, "#it{q}_{2}-small, in-plane", "plf");
         yieldLeg->AddEntry(spectraR02_loout, "#it{q}_{2}-small, out-of-plane", "plf");
-   auto gen5 = new TLegend(0.3, 0.7, 0.8, 0.9);
-        gen5->SetTextSize(0.0315);
+   auto gen5 = new TLegend(0.325, 0.675, 0.825, 0.9);
+        gen5->SetTextSize(0.0425);
         gen5->SetBorderSize(0);
         gen5->SetFillColorAlpha(kWhite, 0.0);
-        gen5->AddEntry((TObject*)0, "ALICE", "");
-        gen5->AddEntry((TObject*)0, "30#font[122]{-}50\% Pb#font[122]{-}Pb, #sqrt{#it{s}_{NN}} = 5.02 TeV", "");
-        gen5->AddEntry((TObject*)0, "Charged-particle jets, anti-#it{k}_{T}, #it{R} = 0.2", "");
-        gen5->AddEntry((TObject*)0, "#it{p}_{T}^{lead track} > 5 GeV/#it{c}, |#it{#eta}_{jet}| < 0.7", "");
-   auto gen6 = new TLegend(0.3, 0.7, 0.8, 0.9);
-        gen6->SetTextSize(0.0315);
+        gen5->AddEntry((TObject*)0, "ALICE, 30#font[122]{-}50\% Pb#font[122]{-}Pb", "");
+        gen5->AddEntry((TObject*)0, "#sqrt{#it{s}_{NN}} = 5.02 TeV", "");
+        gen5->AddEntry((TObject*)0, "Charged-particle jets", "");
+        gen5->AddEntry((TObject*)0, "anti-#it{k}_{T}, #it{R} = 0.2, |#it{#eta}_{jet}| < 0.7", "");
+        gen5->AddEntry((TObject*)0, "#it{p}_{T}^{lead track} > 5 GeV/#it{c}", "");
+   auto gen6 = new TLegend(0.325, 0.675, 0.825, 0.9);
+        gen6->SetTextSize(0.0425);
         gen6->SetBorderSize(0);
         gen6->SetFillColorAlpha(kWhite, 0.0);
-        gen6->AddEntry((TObject*)0, "ALICE", "");
-        gen6->AddEntry((TObject*)0, "30#font[122]{-}50\% Pb#font[122]{-}Pb, #sqrt{#it{s}_{NN}} = 5.02 TeV", "");
-        gen6->AddEntry((TObject*)0, "Charged-particle jets, anti-#it{k}_{T}, #it{R} = 0.4", "");
-        gen6->AddEntry((TObject*)0, "#it{p}_{T}^{lead track} > 5 GeV/#it{c}, |#it{#eta}_{jet}| < 0.5", "");
+        gen6->AddEntry((TObject*)0, "ALICE, 30#font[122]{-}50\% Pb#font[122]{-}Pb", "");
+        gen6->AddEntry((TObject*)0, "#sqrt{#it{s}_{NN}} = 5.02 TeV", "");
+        gen6->AddEntry((TObject*)0, "Charged-particle jets", "");
+        gen6->AddEntry((TObject*)0, "anti-#it{k}_{T}, #it{R} = 0.4, |#it{#eta}_{jet}| < 0.5", "");
+        gen6->AddEntry((TObject*)0, "#it{p}_{T}^{lead track} > 5 GeV/#it{c}", "");
 
 
 
@@ -196,6 +200,9 @@ void plotESE() {
   TLine *line = new TLine(30.0, 1, 120.0, 1);
   line->SetLineStyle(2);
 
+  //-------------
+  //  FIGURE 3
+  //-------------
   TCanvas *c1 = new TCanvas("Plot1", "Plot1", 800, 600);
   c1->cd();
        gStyle->SetOptStat(0);
@@ -217,8 +224,8 @@ void plotESE() {
           spacer1->GetYaxis()->SetTitleOffset(1.2);
           spacer1->GetXaxis()->SetLabelSize(0.04);
           spacer1->GetYaxis()->SetLabelSize(0.04);
-          spacer1->SetMinimum(0.51);
-          spacer1->SetMaximum(1.49);
+          spacer1->SetMinimum(0.61);
+          spacer1->SetMaximum(1.59);
           spacer1->Draw("same");
        syst1->Draw("ezp 5 same");
        yieldratio1->Draw("same");
@@ -228,24 +235,10 @@ void plotESE() {
        gen->Draw("same");
        key->Draw("same");
 
-     /*
-       cout << "\nR = 0.2 Values\n";
-       for (int i = 1; i <= yieldratio2->GetNbinsX(); i++) {
-           cout << "Bin " << yieldratio2->GetBinLowEdge(i) << "-" << yieldratio2->GetBinLowEdge(i+1) << ": " << yieldratio2->GetBinContent(i) <<"\n";}
-       cout << "R = 0.2 Stat Errors\n";
-       for (int i = 1; i <= yieldratio2->GetNbinsX(); i++) {
-           cout << "Bin " << yieldratio2->GetBinLowEdge(i) << "-" << yieldratio2->GetBinLowEdge(i+1) << ": " << yieldratio2->GetBinError(i) <<"\n";
-           cout << "	" << 100*yieldratio2->GetBinError(i)/yieldratio2->GetBinContent(i) <<"\n";}
-       cout << "R = 0.4\n";
-       for (int i = 1; i <= yieldratio1->GetNbinsX(); i++) {
-           cout << "Bin " << yieldratio1->GetBinLowEdge(i) << "-" << yieldratio1->GetBinLowEdge(i+1) << ": " << yieldratio1->GetBinContent(i) <<"\n";}
-       cout << "R = 0.4 Stat Errors\n";
-       for (int i = 1; i <= yieldratio1->GetNbinsX(); i++) {
-           cout << "Bin " << yieldratio1->GetBinLowEdge(i) << "-" << yieldratio1->GetBinLowEdge(i+1) << ": " << yieldratio1->GetBinError(i) <<"\n";
-           cout << "	" << 100*yieldratio1->GetBinError(i)/yieldratio1->GetBinContent(i) <<"\n";}
-     */
-     
 
+  //-----------------------   
+  //  FIGURE 4 (R = 0.2)
+  //-----------------------
   TCanvas *c2 = new TCanvas("Plot2", "Plot2", 800, 600);
   c2->cd();
        gStyle->SetOptStat(0);
@@ -264,11 +257,11 @@ void plotESE() {
              spacer2->SetMinimum(0.01);
              spacer2->SetMaximum(1.99);
              spacer2->SetXTitle("#it{p}_{T, ch jet} (GeV/#it{c})");
-             spacer2->GetXaxis()->SetTitleSize(0.05);
-             spacer2->GetXaxis()->SetLabelSize(0.045);
+             spacer2->GetXaxis()->SetTitleSize(0.0475);
+             spacer2->GetXaxis()->SetLabelSize(0.0475);
              spacer2->GetXaxis()->SetTitleOffset(1.3);
-             spacer2->GetYaxis()->SetTitleSize(0.05);
-             spacer2->GetYaxis()->SetLabelSize(0.045);
+             spacer2->GetYaxis()->SetTitleSize(0.0475);
+             spacer2->GetYaxis()->SetLabelSize(0.0475);
              spacer2->GetYaxis()->SetTitleOffset(1.2);
              spacer2->GetXaxis()->SetRangeUser(35.0, 120.0);
              spacer2->SetYTitle("#frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}}#cbar_{out-of-plane} / #frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}}#cbar_{in-plane}");
@@ -287,6 +280,11 @@ void plotESE() {
    datadetails->Draw("same");
    line->Draw("same");
 
+
+
+  //-----------------------
+  //  FIGURE 4 (R = 0.4)
+  //-----------------------
   TCanvas *c3 = new TCanvas("Plot3", "Plot3", 800, 600);
   c3->cd();
        gStyle->SetOptStat(0);
@@ -317,25 +315,31 @@ void plotESE() {
    line->Draw("same");
 
 
-  TCanvas *c4 = new TCanvas("Plot4", "Plot4", 600, 700);
+  //-----------------------
+  //  FIGURE 2 (R = 0.2)
+  //-----------------------
+  TCanvas *c4 = new TCanvas("Plot4", "Plot4", 500, 800);
   c4->cd();
   TPad *pad4 = new TPad("pad4", "", 0.0, 0.05, 1.0, 1.0);
         pad4->SetBottomMargin(0.1); // Upper and lower plot are joined
-        pad4->SetLeftMargin(0.19); // Upper and lower plot are joined
+        pad4->SetLeftMargin(0.22); // Upper and lower plot are joined
         pad4->SetRightMargin(0.05); // Upper and lower plot are joined
         pad4->SetTopMargin(0.05); // Upper and lower plot are joined
         pad4->Draw();
         pad4->cd();
         pad4->SetLogy();
-       spacer3->GetXaxis()->SetTitleSize(0.04);
+       spacer3->GetXaxis()->SetTitleSize(0.0425);
+       spacer3->GetXaxis()->SetLabelSize(0.0425);
        spacer3->GetXaxis()->SetRangeUser(35.0, 120.0);
        spacer3->SetTitle("");
        spacer3->SetXTitle("#it{p}_{T, ch jet} (GeV/#it{c})");
        spacer3->GetXaxis()->SetTitleOffset(1.2);
-       spacer3->SetYTitle("#frac{1}{#it{N}_{event}} #frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}}");
+       spacer3->SetYTitle("#frac{1}{#it{N}_{event}} #frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}} (GeV/#it{c})^{#font[122]{-}1}");
+       spacer3->GetYaxis()->SetTitleSize(0.0425);
+       spacer3->GetYaxis()->SetLabelSize(0.0425);
        spacer3->GetYaxis()->SetTitleOffset(2.1);
-       spacer3->SetMaximum(2*pow(10,-4));
-       spacer3->SetMinimum(8*pow(10,-8));
+       spacer3->SetMaximum(1*pow(10,-3));
+       spacer3->SetMinimum(1*pow(10,-8));
    spacer3->Draw("same");
    systR02_hiin->Draw("ezp 2 same");  
    systR02_hiout->Draw("ezp 2 same");  
@@ -347,26 +351,31 @@ void plotESE() {
    spectraR02_loout->Draw("same ex0");
    yieldLeg->Draw("same");
    gen5->Draw("same");
-  
-  TCanvas *c5 = new TCanvas("Plot5", "Plot5", 600, 700);
+
+
+
+  //-----------------------
+  //  FIGURE 2 (R = 0.4)
+  //----------------------- 
+  TCanvas *c5 = new TCanvas("Plot5", "Plot5", 500, 800);
   c5->cd();
   TPad *pad5 = new TPad("pad5", "", 0.0, 0.05, 1.0, 1.0);
         pad5->SetBottomMargin(0.1); // Upper and lower plot are joined
-        pad5->SetLeftMargin(0.19); // Upper and lower plot are joined
+        pad5->SetLeftMargin(0.22); // Upper and lower plot are joined
         pad5->SetRightMargin(0.05); // Upper and lower plot are joined
         pad5->SetTopMargin(0.05); // Upper and lower plot are joined
         pad5->Draw();
         pad5->cd();
         pad5->SetLogy();
-       spacer3->GetXaxis()->SetTitleSize(0.04);
+       //spacer3->GetXaxis()->SetTitleSize(0.04);
        spacer3->GetXaxis()->SetRangeUser(35.0, 120.0);
        spacer3->SetTitle("");
        spacer3->SetXTitle("#it{p}_{T, ch jet} (GeV/#it{c})");
        spacer3->GetXaxis()->SetTitleOffset(1.2);
-       spacer3->SetYTitle("#frac{1}{#it{N}_{event}} #frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}}");
+       spacer3->SetYTitle("#frac{1}{#it{N}_{event}} #frac{d^{2}#it{N}}{d#it{p}_{T, ch jet}d#it{#eta}_{jet}} (GeV/#it{c})^{#font[122]{-}1}");
        spacer3->GetYaxis()->SetTitleOffset(2.1);
-       spacer3->SetMaximum(2*pow(10,-4));
-       spacer3->SetMinimum(8*pow(10,-8));
+       //spacer3->SetMaximum(2*pow(10,-4));
+       //spacer3->SetMinimum(8*pow(10,-8));
    spacer3->Draw("same");
    systR04_hiin->Draw("ezp 2 same");  
    systR04_hiout->Draw("ezp 2 same");  
